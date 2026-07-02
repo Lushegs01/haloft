@@ -1,6 +1,6 @@
 -- ============================================
 -- 002: BOOKING INTEGRITY
--- Run after 001_initial_schema.sql.
+-- Run after 001_initial_schema.sql. Idempotent — safe to re-run.
 --
 -- Makes booking creation/cancellation atomic and race-safe:
 --   - CHECK constraint: check_out_date must be after check_in_date
@@ -16,11 +16,13 @@
 -- Needed for the room_id (uuid) column in the GiST exclusion constraint
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_dates_valid;
 ALTER TABLE bookings
     ADD CONSTRAINT bookings_dates_valid CHECK (check_out_date > check_in_date);
 
 -- A room cannot have two pending/confirmed bookings with overlapping stays.
 -- This is the hard backstop; create_booking() also checks it under a row lock.
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_no_overlapping_active;
 ALTER TABLE bookings
     ADD CONSTRAINT bookings_no_overlapping_active EXCLUDE USING gist (
         room_id WITH =,
