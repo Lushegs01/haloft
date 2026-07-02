@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +42,7 @@ export default function SignInPage() {
       toast.error(error.message);
     } else {
       toast.success("Signed in successfully!");
-      router.push("/funaab");
+      router.push(`/${DEFAULT_CAMPUS_SLUG}`);
       router.refresh();
     }
 

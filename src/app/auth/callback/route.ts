@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/funaab";
+  const next = searchParams.get("next") ?? `/${DEFAULT_CAMPUS_SLUG}`;
 
   if (code) {
     const supabase = await createClient();

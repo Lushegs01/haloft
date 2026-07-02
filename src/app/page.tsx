@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Image from "next/image";
+import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 
 const features = [
   {
@@ -92,7 +93,7 @@ export default function HomePage() {
                     className="pl-10 h-12"
                   />
                 </div>
-                <Link href="/funaab">
+                <Link href={`/${DEFAULT_CAMPUS_SLUG}`}>
                   <Button size="lg" className="h-12 gap-2">
                     <Building2 className="h-4 w-4" />
                     Explore FUNAAB
@@ -231,7 +232,7 @@ export default function HomePage() {
             <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
               Join thousands of students who trust Haloft for their accommodation needs.
             </p>
-            <Link href="/funaab">
+            <Link href={`/${DEFAULT_CAMPUS_SLUG}`}>
               <Button
                 size="lg"
                 variant="secondary"
