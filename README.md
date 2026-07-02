@@ -34,7 +34,7 @@ Required variables:
 
 ### Database Setup
 
-1. Run the migrations in `src/db/migrations/` in numeric order (001 through 005) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, and 005 sets up automatic profile creation on signup.
+1. Run the migrations in `src/db/migrations/` in numeric order (001 through 006) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, and 006 creates the photo storage bucket and admin booking functions.
 2. Seed data for FUNAAB is included in the migration.
 3. Enable email provider in Supabase Auth settings.
 4. (Optional) Configure Google OAuth provider.

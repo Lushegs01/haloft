@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { FileText, Search, ArrowLeft, Pencil, Eye } from "lucide-react";
+import { FileText, Search } from "lucide-react";
+import { BookingActions } from "./booking-actions";
 
 export default async function AdminBookingsPage({
   searchParams,
@@ -85,6 +86,7 @@ export default async function AdminBookingsPage({
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground">Dates</th>
                     <th className="text-right px-4 py-3 font-medium text-muted-foreground">Amount</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,6 +114,9 @@ export default async function AdminBookingsPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <p className="font-medium">₦{booking.total_amount?.toLocaleString()}</p>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <BookingActions bookingId={booking.id} status={booking.status} />
                       </td>
                     </tr>
                   ))}

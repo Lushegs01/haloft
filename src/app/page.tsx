@@ -9,11 +9,9 @@ import {
   Shield,
   Wallet,
   MapPin,
-  Star,
   Users,
   ArrowRight,
 } from "lucide-react";
-import Image from "next/image";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 
 const features = [
@@ -43,27 +41,6 @@ const features = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Chinwe O.",
-    role: "300L Biochemistry, FUNAAB",
-    text: "Haloft made finding accommodation so easy. I booked my room before arriving on campus and everything was exactly as described.",
-    rating: 5,
-  },
-  {
-    name: "Babatunde A.",
-    role: "400L Computer Science, FUNAAB",
-    text: "The verification process gives real peace of mind. No more getting scammed by fake agents. Highly recommend.",
-    rating: 5,
-  },
-  {
-    name: "Ngozi E.",
-    role: "MSc Agricultural Economics, FUNAAB",
-    text: "As a postgraduate student, I needed quiet and privacy. Haloft had options that other platforms didn't even list.",
-    rating: 5,
-  },
-];
-
 export default function HomePage() {
   return (
     <div className="flex min-h-full flex-col">
@@ -74,8 +51,8 @@ export default function HomePage() {
           <div className="container mx-auto px-4 lg:px-8 py-20 lg:py-32">
             <div className="max-w-3xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
-                <Star className="h-3.5 w-3.5 fill-primary" />
-                Trusted by 10,000+ students across Nigeria
+                <Shield className="h-3.5 w-3.5" />
+                Now live at FUNAAB — every listing inspected by our team
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-6">
                 Find your perfect
@@ -157,9 +134,9 @@ export default function HomePage() {
                 },
                 {
                   step: "02",
-                  title: "Book Your Room",
+                  title: "Request Your Room",
                   description:
-                    "Select your move-in date, pay your deposit securely, and receive instant confirmation.",
+                    "Pick your move-in date and submit a booking request. Our team confirms availability with you directly.",
                 },
                 {
                   step: "03",
@@ -185,44 +162,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section className="py-20 lg:py-24">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold tracking-tight mb-4">
-                Loved by students
-              </h2>
-              <p className="text-muted-foreground">
-                Real reviews from real students who found their home through Haloft.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {testimonials.map((t) => (
-                <div
-                  key={t.name}
-                  className="rounded-xl border border-border bg-card p-6"
-                >
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-4 w-4 fill-amber text-amber"
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm text-foreground leading-relaxed mb-6">
-                    &ldquo;{t.text}&rdquo;
-                  </p>
-                  <div>
-                    <p className="font-semibold text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* CTA */}
         <section className="py-20 lg:py-24 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 lg:px-8 text-center">
@@ -230,7 +169,7 @@ export default function HomePage() {
               Ready to find your home?
             </h2>
             <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-              Join thousands of students who trust Haloft for their accommodation needs.
+              Browse verified student housing near FUNAAB — inspected by our team, with transparent pricing and no agent fees.
             </p>
             <Link href={`/${DEFAULT_CAMPUS_SLUG}`}>
               <Button

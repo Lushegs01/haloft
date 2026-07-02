@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Home, Calendar, Heart, Star } from "lucide-react";
+import { Home, Calendar, Heart, Star } from "lucide-react";
 import Link from "next/link";
+import { CancelBookingButton } from "./cancel-booking-button";
 
 export default async function StudentDashboardPage({
   params,
@@ -103,9 +104,14 @@ export default async function StudentDashboardPage({
                           {new Date(booking.check_out_date).toLocaleDateString()}
                         </p>
                       </div>
-                      <Badge variant="outline" className={statusColors[booking.status] ?? ""}>
-                        {booking.status}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant="outline" className={statusColors[booking.status] ?? ""}>
+                          {booking.status}
+                        </Badge>
+                        {(booking.status === "pending" || booking.status === "confirmed") && (
+                          <CancelBookingButton bookingId={booking.id} campusSlug={campus} />
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

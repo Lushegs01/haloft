@@ -1120,6 +1120,13 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["bookings"]["Row"];
       };
+      admin_update_booking_status: {
+        Args: {
+          p_booking_id: string;
+          p_action: string;
+        };
+        Returns: Database["public"]["Tables"]["bookings"]["Row"];
+      };
     };
     Enums: {
       [_ in never]: never;
