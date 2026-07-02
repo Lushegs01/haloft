@@ -1,0 +1,95 @@
+# Haloft
+
+The trusted accommodation marketplace for university students. Built with Next.js, Supabase, and Tailwind CSS.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router) + TypeScript (strict mode)
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Backend:** Supabase (Auth, PostgreSQL, Storage, RLS)
+- **Maps:** Google Maps (configurable via env)
+- **Validation:** Zod at every boundary
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- A Supabase project
+- (Optional) Google Maps API key
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — your Supabase anon/public key
+- `NEXT_PUBLIC_SITE_URL` — your deployed site URL (for auth redirects)
+
+### Database Setup
+
+1. Run the migrations in `src/db/migrations/` in numeric order (001 through 005) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, and 005 sets up automatic profile creation on signup.
+2. Seed data for FUNAAB is included in the migration.
+3. Enable email provider in Supabase Auth settings.
+4. (Optional) Configure Google OAuth provider.
+
+### Install & Run
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Architecture
+
+### Multi-tenant by design
+
+- Universities, campuses, and neighbourhoods are **data**, not code.
+- Every tenant-scoped query carries the campus lineage.
+- RLS enforces tenant isolation at the database level.
+- Adding a new campus = inserting rows + uploading media + flipping a flag. No code changes.
+
+### Routing
+
+- Public: `/[campus]/...` — path-based campus routing
+- Admin: `/admin/...` — protected CMS
+- Auth: `/auth/...` — sign-in, sign-up, callback
+
+### Key decisions
+
+- **Property → Building → Room hierarchy**: Property is the listing entity. Buildings are optional physical structures. Rooms are the bookable units.
+- **No public listing creation**: All properties are sourced and managed by the Haloft operations team via the Admin CMS.
+- **No landlord self-service**: Landlords exist in the data model for attribution and payouts only.
+
+## Project Structure
+
+```
+src/
+  app/               Next.js App Router routes
+    [campus]/        Campus-scoped public pages
+    admin/           Admin CMS (protected)
+    auth/            Authentication pages
+  components/
+    layout/          Header, Footer, shell
+    property/        Property detail components
+    search/          Search results & filters
+    ui/              shadcn/ui components
+  hooks/             React hooks (useAuth)
+  lib/
+    data/            Supabase data access layer
+    supabase/        Client & server Supabase clients
+  types/             TypeScript database types
+  db/migrations/     SQL schema & seed data
+```
+
+## License
+
+Private — All rights reserved.
