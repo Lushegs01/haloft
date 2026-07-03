@@ -22,7 +22,7 @@ export default async function SearchPage({
 
   const { data: campusData } = await supabase
     .from("campuses")
-    .select("id, name, slug, university_id")
+    .select("id, name, slug, university_id, latitude, longitude")
     .eq("slug", campus)
     .eq("is_active", true)
     .is("deleted_at", null)
@@ -93,6 +93,8 @@ export default async function SearchPage({
               <SearchResults
                 campusId={campusData.id}
                 campusSlug={campus}
+                campusLat={campusData.latitude}
+                campusLng={campusData.longitude}
                 filters={filters}
               />
             </Suspense>

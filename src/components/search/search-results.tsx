@@ -1,4 +1,5 @@
 import { getCampusProperties } from "@/lib/data/campus";
+import { walkMinutes } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -240,6 +241,8 @@ export function SearchFilters({
 interface SearchResultsProps {
   campusId: string;
   campusSlug: string;
+  campusLat?: number | null;
+  campusLng?: number | null;
   filters: {
     neighbourhoodId?: string;
     propertyType?: string;
@@ -253,6 +256,8 @@ interface SearchResultsProps {
 export async function SearchResults({
   campusId,
   campusSlug,
+  campusLat,
+  campusLng,
   filters,
 }: SearchResultsProps) {
   const properties = await getCampusProperties(campusId, filters);
@@ -286,7 +291,20 @@ export async function SearchResults({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5">
-        {properties.map((property) => (
+        {properties.map((property) => {
+          const minutes =
+            campusLat != null &&
+            campusLng != null &&
+            property.latitude != null &&
+            property.longitude != null
+              ? walkMinutes(
+                  Number(property.latitude),
+                  Number(property.longitude),
+                  Number(campusLat),
+                  Number(campusLng)
+                )
+              : null;
+          return (
           <Link
             key={property.id}
             href={`/${campusSlug}/property/${property.slug}`}
@@ -320,7 +338,7 @@ export async function SearchResults({
               {/* Price overlay */}
               <div className="absolute bottom-3 right-3">
                 <div className="rounded-lg bg-black/55 backdrop-blur-sm px-3 py-1.5 text-right">
-                  <p className="text-white font-bold text-sm">₦{property.min_price?.toLocaleString() ?? "N/A"}</p>
+                  <p className="text-white font-bold text-sm heading-display">₦{property.min_price?.toLocaleString() ?? "N/A"}</p>
                   <p className="text-white/70 text-[10px]">/month</p>
                 </div>
               </div>
@@ -329,18 +347,22 @@ export async function SearchResults({
             {/* Info */}
             <div className="p-4 flex-1 flex flex-col">
               <div className="flex items-start justify-between gap-2 mb-2">
-                <h3
-                  className="font-semibold text-foreground group-hover:text-primary transition-colors leading-snug"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
+                <h3 className="heading-display font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
                   {property.title}
                 </h3>
               </div>
 
-              <p className="text-sm text-muted-foreground flex items-center gap-1.5 mb-3">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{property.address}</span>
-              </p>
+              <div className="flex items-center gap-2 mb-3 min-w-0">
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{property.address}</span>
+                </p>
+                {minutes !== null && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-teal/10 text-teal border border-teal/20 px-2 py-0.5 text-[11px] font-semibold shrink-0">
+                    ≈ {minutes} min walk
+                  </span>
+                )}
+              </div>
 
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex items-center gap-1">
@@ -376,7 +398,8 @@ export async function SearchResults({
               </div>
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

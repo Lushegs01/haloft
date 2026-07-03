@@ -2,75 +2,82 @@ import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
-import {
-  Building2,
-  Shield,
-  Wallet,
-  MapPin,
-  Users,
-  ArrowRight,
-  CheckCircle2,
-  ChevronRight,
-} from "lucide-react";
+import { Roofline } from "@/components/ui/roofline";
+import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
+import { Search, ArrowRight, ArrowUpRight } from "lucide-react";
 
-const features = [
-  {
-    icon: Shield,
-    title: "Verified Listings",
-    description:
-      "Every property is physically inspected by our operations team before going live — zero fake listings.",
-    color: "text-success",
-    bg: "bg-success/10",
-  },
-  {
-    icon: Wallet,
-    title: "Transparent Pricing",
-    description:
-      "No hidden fees, no agent commission. See the exact cost breakdown before you commit.",
-    color: "text-primary",
-    bg: "bg-primary/10",
-  },
-  {
-    icon: MapPin,
-    title: "Campus Proximity",
-    description:
-      "Filter by distance to lecture halls, libraries, and all student facilities.",
-    color: "text-info",
-    bg: "bg-info/10",
-  },
-  {
-    icon: Users,
-    title: "Built for Students",
-    description:
-      "From single rooms to hostel blocks, every listing speaks your language and fits your budget.",
-    color: "text-amber",
-    bg: "bg-amber/10",
-  },
+// Falls back to the launch campus's real neighbourhoods when the
+// database is unreachable (e.g. local dev without env vars)
+const FALLBACK_NEIGHBOURHOODS = [
+  { id: null, name: "Campus Gate", description: "Right at the main gate. High demand, two minutes to lectures." },
+  { id: null, name: "Campus Axis", description: "The student hub — food, shops, photocopy, everything close." },
+  { id: null, name: "Famous Market", description: "Affordable rooms with good transport links, near the market." },
+  { id: null, name: "Damico", description: "Quiet area, a favourite of final years and postgraduates." },
+  { id: null, name: "Osiele", description: "Budget-friendly shared housing with a real community feel." },
 ];
+
+async function getNeighbourhoods() {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("campuses")
+      .select("id, neighbourhoods(id, name, description)")
+      .eq("slug", DEFAULT_CAMPUS_SLUG)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .single();
+    if (data?.neighbourhoods && data.neighbourhoods.length > 0) {
+      return data.neighbourhoods;
+    }
+  } catch {
+    // fall through to static list
+  }
+  return FALLBACK_NEIGHBOURHOODS;
+}
 
 const steps = [
   {
-    step: "01",
-    title: "Search & Compare",
+    n: "1",
+    title: "Search and compare",
     description:
-      "Browse verified listings with real photos, honest reviews, and complete pricing — all in one place.",
+      "Real photos, real prices in naira, honest reviews from students who actually lived there.",
   },
   {
-    step: "02",
-    title: "Request Your Room",
+    n: "2",
+    title: "Request your room",
     description:
-      "Select your move-in date and submit a booking request. Our team confirms availability directly with you.",
+      "Pick your move-in date and send a booking request. Our team confirms the room is truly free.",
   },
   {
-    step: "03",
-    title: "Move In, Stress-Free",
+    n: "3",
+    title: "Pay online, move in",
     description:
-      "Show your booking confirmation on arrival. We guarantee the room matches what you saw online.",
+      "Pay securely with card, transfer, or USSD once confirmed. Your room is locked the moment you pay.",
   },
 ];
 
-export default function HomePage() {
+const proofs = [
+  {
+    title: "Inspected in person",
+    description:
+      "Nobody lists on Haloft over the phone. Our team walks every corridor, checks the water, counts the sockets — before a property goes live.",
+  },
+  {
+    title: "The price is the price",
+    description:
+      "No agent fee, no inspection fee, no 'settlement'. The naira amount on the listing is the naira amount you pay.",
+  },
+  {
+    title: "Money moves safely",
+    description:
+      "Payments run through Paystack, not someone's personal account. Every kobo is receipted and traceable.",
+  },
+];
+
+export default async function HomePage() {
+  const neighbourhoods = await getNeighbourhoods();
+
   return (
     <div className="flex min-h-full flex-col">
       <Header />
@@ -78,154 +85,222 @@ export default function HomePage() {
 
         {/* ── Hero ──────────────────────────────────────────── */}
         <section className="relative overflow-hidden hero-gradient">
-          {/* Decorative blobs */}
-          <div className="pointer-events-none absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-24 h-[400px] w-[400px] rounded-full bg-amber/5 blur-3xl" />
+          <div className="container mx-auto px-4 lg:px-8 pt-16 pb-14 lg:pt-24 lg:pb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-8 items-center">
 
-          <div className="container mx-auto px-4 lg:px-8 py-20 lg:py-32 relative">
-            <div className="max-w-3xl mx-auto text-center">
+              {/* Copy + search */}
+              <div className="max-w-xl">
+                <div className="flex items-center gap-2.5 mb-6 animate-fade-in">
+                  <Roofline width={26} />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/60">
+                    FUNAAB · Abeokuta, Ogun State
+                  </p>
+                </div>
 
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-2 text-sm font-medium text-primary mb-8 animate-fade-in">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-                </span>
-                Now live at FUNAAB — every listing inspected by our team
+                <h1
+                  className="heading-display text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem] font-extrabold text-foreground mb-8 animate-slide-up"
+                >
+                  Find your room.
+                  <br />
+                  Skip the <span className="relative inline-block">wahala.
+                    <Roofline
+                      flat
+                      width={150}
+                      strokeWidth={3.5}
+                      className="absolute left-[4%] top-full mt-0.5 w-[62%] h-auto"
+                      stroke="var(--logo-teal)"
+                    />
+                  </span>
+                </h1>
+
+                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-8 animate-slide-up stagger-1 max-w-md">
+                  Hostels and self-contains near campus — every one inspected by
+                  our team before it&apos;s listed. No agents. No fake pictures.
+                </p>
+
+                {/* Working search */}
+                <form
+                  action={`/${DEFAULT_CAMPUS_SLUG}/search`}
+                  className="flex items-stretch gap-0 rounded-2xl border border-border bg-card shadow-lg shadow-black/5 p-1.5 mb-5 animate-slide-up stagger-2 focus-within:border-primary/40 transition-colors"
+                >
+                  <div className="flex items-center pl-3.5 pr-2 text-muted-foreground">
+                    <Search className="h-4.5 w-4.5" />
+                  </div>
+                  <input
+                    type="text"
+                    name="q"
+                    placeholder="Try 'self contain' or 'Damico'…"
+                    className="flex-1 min-w-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+                    aria-label="Search rooms"
+                  />
+                  <Button type="submit" className="rounded-xl px-5 font-semibold shrink-0">
+                    Search
+                  </Button>
+                </form>
+
+                {/* Real neighbourhood chips */}
+                <div className="flex flex-wrap items-center gap-2 animate-fade-in stagger-3">
+                  <span className="text-xs text-muted-foreground font-medium mr-0.5">Popular areas:</span>
+                  {neighbourhoods.slice(0, 5).map((n) => (
+                    <Link
+                      key={n.name}
+                      href={
+                        n.id
+                          ? `/${DEFAULT_CAMPUS_SLUG}/search?neighbourhood=${n.id}`
+                          : `/${DEFAULT_CAMPUS_SLUG}/search`
+                      }
+                      className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 hover:border-teal/60 hover:text-teal transition-colors no-underline"
+                    >
+                      {n.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
 
-              {/* Headline */}
-              <h1
-                className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 animate-slide-up"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.04em", lineHeight: "1.05" }}
-              >
-                Find your perfect{" "}
-                <span className="gradient-text">student home</span>
-              </h1>
+              {/* Brand line art + fact chips */}
+              <div className="relative hidden lg:flex items-center justify-center animate-fade-in stagger-2" aria-hidden="true">
+                <svg width="420" height="420" viewBox="0 0 420 420" fill="none" className="max-w-full h-auto">
+                  <defs>
+                    <linearGradient id="heroRing" x1="0%" y1="80%" x2="100%" y2="20%">
+                      <stop offset="0%" stopColor="var(--logo-navy)" />
+                      <stop offset="100%" stopColor="var(--logo-teal)" />
+                    </linearGradient>
+                  </defs>
+                  {/* Faint dashed halo */}
+                  <circle cx="210" cy="200" r="185" stroke="var(--logo-navy)" strokeOpacity="0.1" strokeWidth="1.5" strokeDasharray="3 8" />
+                  {/* Ring, open at the bottom */}
+                  <path
+                    d="M 113 297 A 138 138 0 1 1 307 297"
+                    stroke="url(#heroRing)"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                  />
+                  {/* Roofline */}
+                  <path
+                    d="M 113 297 L 210 190 L 307 297"
+                    stroke="url(#heroRing)"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="210" cy="190" r="14" fill="var(--logo-orange)" />
+                </svg>
 
-              <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto animate-slide-up stagger-1">
-                Verified accommodation for university students. Browse, compare, and book your room with complete confidence — no scams, no hidden fees.
-              </p>
-
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12 animate-slide-up stagger-2">
-                <Link href={`/${DEFAULT_CAMPUS_SLUG}`}>
-                  <Button size="lg" className="h-13 px-8 text-base font-semibold rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all gap-2 group">
-                    <Building2 className="h-5 w-5" />
-                    Explore FUNAAB Listings
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-                <Link href="/auth/signup">
-                  <Button variant="outline" size="lg" className="h-13 px-8 text-base font-semibold rounded-full">
-                    Create free account
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Trust signals */}
-              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in stagger-3">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Shield className="h-4 w-4 text-primary" />
-                  Every listing inspected in person
+                {/* Floating facts — all true */}
+                <div className="absolute top-10 right-2 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg shadow-black/5 animate-float">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-teal mb-0.5">Inspected ✓</p>
+                  <p className="text-xs text-muted-foreground">by the Haloft team,<br />in person</p>
                 </div>
-                <div className="w-px h-4 bg-border hidden sm:block" />
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  No agent fees
+                <div className="absolute bottom-24 left-0 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg shadow-black/5 animate-float" style={{ animationDelay: "1.2s" }}>
+                  <p className="heading-display text-lg font-extrabold text-foreground">₦60k – ₦350k</p>
+                  <p className="text-xs text-muted-foreground">per year, all prices upfront</p>
                 </div>
-                <div className="w-px h-4 bg-border hidden sm:block" />
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Wallet className="h-4 w-4 text-amber" />
-                  Transparent pricing
+                <div className="absolute bottom-2 right-16 rounded-full border border-border bg-card px-4 py-2 shadow-lg shadow-black/5 animate-float" style={{ animationDelay: "0.6s" }}>
+                  <p className="text-xs font-semibold text-foreground/80">{neighbourhoods.length} neighbourhoods · 1 campus</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── Why Haloft ────────────────────────────────────── */}
-        <section className="section-py bg-background">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-3">Why students choose us</p>
-              <h2
-                className="text-3xl lg:text-4xl font-bold text-foreground mb-4"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
-                Tired of scams and hidden fees?
-              </h2>
-              <p className="text-muted-foreground text-lg">
-                We built Haloft because we were students once too.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {features.map((feature, i) => (
-                <div
-                  key={feature.title}
-                  className={`group rounded-2xl border border-border bg-card p-6 transition-all hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 cursor-default stagger-${i + 1}`}
-                >
-                  <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${feature.bg}`}>
-                    <feature.icon className={`h-6 w-6 ${feature.color}`} />
-                  </div>
-                  <h3
-                    className="font-bold text-foreground mb-2 text-lg"
-                    style={{ fontFamily: "var(--font-inter)" }}
-                  >
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
+        {/* ── Fact strip ───────────────────────────────────── */}
+        <section className="bg-night text-night-foreground">
+          <div className="container mx-auto px-4 lg:px-8 py-5">
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+              {[
+                "Every listing inspected in person",
+                "No agent fees — ever",
+                "Pay online with Paystack",
+                "Rooms from ₦60k a year",
+              ].map((fact, i, arr) => (
+                <div key={fact} className="flex items-center gap-8">
+                  <p className="text-sm font-medium text-night-foreground/85">{fact}</p>
+                  {i < arr.length - 1 && (
+                    <Roofline width={18} stroke="rgba(232,240,251,0.35)" className="hidden sm:block" />
+                  )}
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── How it works ─────────────────────────────────── */}
-        <section className="section-py bg-muted/30">
+        {/* ── Neighbourhoods ───────────────────────────────── */}
+        <section className="section-py bg-background">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-3">Simple process</p>
-              <h2
-                className="text-3xl lg:text-4xl font-bold text-foreground mb-4"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
+            <div className="flex items-end justify-between gap-6 mb-10">
+              <div>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <Roofline width={26} />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/60">
+                    Know your area
+                  </p>
+                </div>
+                <h2 className="heading-display text-3xl lg:text-[2.6rem] font-extrabold text-foreground">
+                  Where do you want to land?
+                </h2>
+              </div>
+              <Link
+                href={`/${DEFAULT_CAMPUS_SLUG}/search`}
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary transition-colors shrink-0 no-underline"
               >
-                Book in 3 simple steps
-              </h2>
-              <p className="text-muted-foreground text-lg">
-                From search to move-in, we&apos;ve streamlined every step.
-              </p>
+                All listings <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-              {/* Connector line (desktop) */}
-              <div className="hidden md:block absolute top-16 left-[calc(33.33%+16px)] right-[calc(33.33%+16px)] h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
-
-              {steps.map((item, i) => (
-                <div
-                  key={item.step}
-                  className={`relative rounded-2xl border border-border bg-card p-8 hover:shadow-lg transition-all group stagger-${i + 1}`}
+            <div className="flex lg:grid lg:grid-cols-5 gap-4 overflow-x-auto lg:overflow-visible scrollbar-hide snap-x pb-2 -mx-4 px-4 lg:mx-0 lg:px-0">
+              {neighbourhoods.slice(0, 5).map((n) => (
+                <Link
+                  key={n.name}
+                  href={
+                    n.id
+                      ? `/${DEFAULT_CAMPUS_SLUG}/search?neighbourhood=${n.id}`
+                      : `/${DEFAULT_CAMPUS_SLUG}/search`
+                  }
+                  className="group relative rounded-2xl border border-border bg-card p-5 min-w-[230px] lg:min-w-0 snap-start transition-all hover:border-teal/50 hover:shadow-lg hover:shadow-black/5 no-underline flex flex-col"
                 >
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-md shadow-primary/30 shrink-0">
-                      <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-inter)" }}>
-                        {item.step}
-                      </span>
-                    </div>
-                    {i < steps.length - 1 && (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground hidden md:block absolute right-[-20px] top-1/3 z-10" />
-                    )}
-                  </div>
-                  <h3
-                    className="text-xl font-bold mb-3 text-foreground"
-                    style={{ fontFamily: "var(--font-inter)" }}
-                  >
-                    {item.title}
+                  <Roofline width={22} stroke="var(--logo-teal)" className="mb-4 opacity-80" />
+                  <h3 className="heading-display font-bold text-lg text-foreground mb-1.5">
+                    {n.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+                    {n.description}
+                  </p>
+                  <span className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-foreground/70 group-hover:text-teal transition-colors">
+                    See rooms <ArrowUpRight className="h-3.5 w-3.5" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── How it works ─────────────────────────────────── */}
+        <section className="section-py bg-muted/40 border-y border-border">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-xl mb-12">
+              <div className="flex items-center gap-2.5 mb-4">
+                <Roofline width={26} />
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/60">
+                  From search to keys
+                </p>
+              </div>
+              <h2 className="heading-display text-3xl lg:text-[2.6rem] font-extrabold text-foreground">
+                Three steps. No middlemen.
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+              {steps.map((item) => (
+                <div key={item.n} className="relative">
+                  <div className="flex items-baseline gap-3 mb-3">
+                    <span className="heading-display text-5xl font-extrabold text-foreground/12 select-none">
+                      {item.n}
+                    </span>
+                    <h3 className="heading-display text-xl font-bold text-foreground">
+                      {item.title}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed md:pr-4">
                     {item.description}
                   </p>
                 </div>
@@ -234,57 +309,75 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── CTA Banner ───────────────────────────────────── */}
-        <section className="section-py relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-orange-600" />
-          <div className="pointer-events-none absolute -top-24 -right-24 h-[400px] w-[400px] rounded-full bg-white/5 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 h-[300px] w-[300px] rounded-full bg-white/5 blur-2xl" />
+        {/* ── Why trust us ─────────────────────────────────── */}
+        <section className="section-py bg-background">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-xl mb-12">
+              <div className="flex items-center gap-2.5 mb-4">
+                <Roofline width={26} />
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/60">
+                  Why students trust Haloft
+                </p>
+              </div>
+              <h2 className="heading-display text-3xl lg:text-[2.6rem] font-extrabold text-foreground">
+                Built by people who have
+                <br className="hidden sm:block" /> hunted for hostels too.
+              </h2>
+            </div>
 
-          <div className="container mx-auto px-4 lg:px-8 text-center relative">
-            {/* Trust row */}
-            <div className="flex items-center justify-center gap-6 mb-10 flex-wrap">
-              {[
-                { icon: Shield, text: "Verified listings" },
-                { icon: Wallet, text: "No hidden fees" },
-                { icon: MapPin, text: "Close to campus" },
-                { icon: CheckCircle2, text: "Team-reviewed bookings" },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 text-white/90 text-sm">
-                  <Icon className="h-4 w-4 text-white/70" />
-                  {text}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {proofs.map((p) => (
+                <div key={p.title} className="border-t-2 border-teal/60 pt-5">
+                  <h3 className="heading-display text-lg font-bold text-foreground mb-2">
+                    {p.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {p.description}
+                  </p>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            <h2
-              className="text-4xl lg:text-5xl font-extrabold text-white mb-5"
-              style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-            >
-              Ready to find your home?
-            </h2>
-            <p className="text-white/80 max-w-xl mx-auto mb-10 text-lg">
-              Browse verified student housing near FUNAAB — inspected by our team, transparent pricing, zero agent fees.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={`/${DEFAULT_CAMPUS_SLUG}`}>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="h-13 px-8 text-base font-semibold rounded-full gap-2 group shadow-xl"
-                >
-                  Explore Listings
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-13 px-8 text-base font-semibold rounded-full border-white/30 text-white hover:bg-white/10 bg-transparent"
-                >
-                  Create free account
-                </Button>
-              </Link>
+        {/* ── CTA ──────────────────────────────────────────── */}
+        <section className="relative overflow-hidden bg-night">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-end opacity-[0.07]" aria-hidden="true">
+            <svg width="560" height="560" viewBox="0 0 420 420" fill="none" className="translate-x-32">
+              <path d="M 113 297 A 138 138 0 1 1 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" />
+              <path d="M 113 297 L 210 190 L 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="210" cy="190" r="14" fill="var(--logo-orange)" />
+            </svg>
+          </div>
+
+          <div className="container mx-auto px-4 lg:px-8 section-py relative">
+            <div className="max-w-2xl">
+              <h2 className="heading-display text-4xl sm:text-5xl font-extrabold text-night-foreground mb-5">
+                Your next room is
+                <br />
+                already inspected.
+              </h2>
+              <p className="text-night-foreground/70 text-lg mb-9 max-w-lg">
+                Browse verified rooms across {neighbourhoods.length} neighbourhoods around FUNAAB —
+                then book it before someone else does.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href={`/${DEFAULT_CAMPUS_SLUG}/search`}>
+                  <Button size="lg" className="h-13 px-8 text-base font-semibold rounded-full gap-2 group shadow-lg shadow-primary/30">
+                    Browse rooms at FUNAAB
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-13 px-8 text-base font-semibold rounded-full border-night-foreground/25 text-night-foreground hover:bg-night-foreground/10 bg-transparent"
+                  >
+                    Create free account
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>

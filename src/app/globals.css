@@ -10,10 +10,8 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-inter: var(--font-inter);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-inter: var(--font-inter);
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   --font-inter: var(--font-inter);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-heading: var(--font-inter);
@@ -71,6 +69,8 @@
   --color-slate-foreground: var(--slate-foreground);
   --color-cream: var(--cream);
   --color-cream-foreground: var(--cream-foreground);
+  --color-night: var(--night);
+  --color-night-foreground: var(--night-foreground);
 }
 
 :root {
@@ -140,6 +140,13 @@
   --logo-navy: #1e3a6e;
   --logo-teal: #3db8a3;
   --logo-orange: #e86530;
+
+  /* Dark structural surface (fact strip, CTA) */
+  --night: #0c1c3d;
+  --night-foreground: #e8f0fb;
+
+  /* The logo wordmark renders in the display face */
+  --font-logo: var(--font-display);
 }
 
 .dark {
@@ -209,9 +216,7 @@
     @apply text-primary underline-offset-4;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.02em;
     color: var(--logo-navy, #1e3a6e);
   }
@@ -231,9 +236,9 @@
 
   /* Typography helpers */
   .heading-display {
-    font-family: var(--font-inter), system-ui, sans-serif;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
   }
   .heading-xl {
     font-size: clamp(2rem, 5vw, 3.5rem);
@@ -338,6 +343,22 @@
   .stagger-2 { animation-delay: 0.1s; }
   .stagger-3 { animation-delay: 0.15s; }
   .stagger-4 { animation-delay: 0.2s; }
+}
+
+/* Quality floor: honour reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-slide-in-right,
+  .animate-scale-in,
+  .animate-float,
+  .animate-pulse-soft,
+  .shimmer {
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* ─── Keyframes ───────────────────────────────────────── */
