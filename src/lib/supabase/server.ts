@@ -5,9 +5,25 @@ import type { Database } from "@/types/database";
 export async function createClient() {
   const cookieStore = await cookies();
 
+  let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  let key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Supabase configuration missing: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      );
+    }
+    // Local dev without .env.local: dummy client so pages render
+    // (with empty data) instead of crashing. Copy .env.example to
+    // .env.local and fill in real values to see live data locally.
+    url = "http://localhost:54321";
+    key = "dummy-key-for-local-dev";
+  }
+
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       cookies: {
         getAll() {
