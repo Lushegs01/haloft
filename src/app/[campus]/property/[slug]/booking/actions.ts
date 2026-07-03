@@ -23,6 +23,8 @@ const bookingErrorMessages: Record<string, string> = {
   ROOM_UNAVAILABLE: "This room is no longer available.",
   BOOKING_NOT_FOUND: "Booking not found.",
   BOOKING_NOT_CANCELLABLE: "This booking cannot be cancelled.",
+  BOOKING_PAID:
+    "This booking has already been paid for. Contact our team to cancel and arrange a refund.",
 };
 
 function friendlyBookingError(error: { code?: string; message: string }) {

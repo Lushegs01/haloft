@@ -19,13 +19,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CancelBookingButton } from "./cancel-booking-button";
+import { PayNowButton } from "./pay-now-button";
 
 export default async function StudentDashboardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ campus: string }>;
+  searchParams: Promise<{ payment?: string }>;
 }) {
   const { campus } = await params;
+  const { payment: paymentOutcome } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -48,7 +52,7 @@ export default async function StudentDashboardPage({
 
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("*, rooms(name, price_per_month), properties(title, slug, campus_id)")
+    .select("*, rooms(name, price_per_month), properties(title, slug, campus_id), payments(id, status)")
     .eq("student_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -152,6 +156,26 @@ export default async function StudentDashboardPage({
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 py-8">
+        {paymentOutcome === "success" && (
+          <div className="mb-6 rounded-2xl border border-success/30 bg-success/10 px-5 py-4 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+            <div>
+              <p className="font-semibold text-foreground text-sm">Payment received — your room is secured!</p>
+              <p className="text-sm text-muted-foreground">A receipt was sent to your email by Paystack.</p>
+            </div>
+          </div>
+        )}
+        {paymentOutcome === "failed" && (
+          <div className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-4 flex items-center gap-3">
+            <XCircle className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="font-semibold text-foreground text-sm">Payment not completed</p>
+              <p className="text-sm text-muted-foreground">
+                You were not charged, or the charge could not be confirmed. Try again, or contact us if you were debited.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ── Main: Bookings + Reviews ──────────────────── */}
@@ -183,6 +207,7 @@ export default async function StudentDashboardPage({
                   <div className="space-y-3">
                     {bookings.map((booking) => {
                       const s = statusConfig[booking.status] ?? statusConfig.pending;
+                      const isPaid = booking.payments?.some((p) => p.status === "success");
                       return (
                         <div
                           key={booking.id}
@@ -210,7 +235,21 @@ export default async function StudentDashboardPage({
                                 {s.icon}
                                 {s.label}
                               </span>
-                              {(booking.status === "pending" || booking.status === "confirmed") && (
+                              {isPaid && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border bg-success/10 text-success border-success/20">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Paid
+                                </span>
+                              )}
+                              {booking.status === "confirmed" && !isPaid && (
+                                <PayNowButton
+                                  bookingId={booking.id}
+                                  campusSlug={campus}
+                                  amount={Number(booking.total_amount)}
+                                />
+                              )}
+                              {(booking.status === "pending" ||
+                                (booking.status === "confirmed" && !isPaid)) && (
                                 <CancelBookingButton bookingId={booking.id} campusSlug={campus} />
                               )}
                             </div>

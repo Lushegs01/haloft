@@ -34,10 +34,19 @@ Required variables:
 
 ### Database Setup
 
-1. Run the migrations in `src/db/migrations/` in numeric order (001 through 006) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, and 006 creates the photo storage bucket and admin booking functions.
+1. Run the migrations in `src/db/migrations/` in numeric order (001 through 007) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, 006 creates the photo storage bucket and admin booking functions, and 007 adds payment integrity constraints.
 2. Seed data for FUNAAB is included in the migration.
 3. Enable email provider in Supabase Auth settings.
 4. (Optional) Configure Google OAuth provider.
+
+### Payments (Paystack)
+
+Students pay for **confirmed** bookings from their dashboard; the amount charged is always the booking's `total_amount`, computed server-side.
+
+1. Create a [Paystack](https://paystack.com) account and grab your secret key (`sk_test_...` for testing).
+2. Set `PAYSTACK_SECRET_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (and in your hosting provider's environment for production).
+3. In the Paystack dashboard under **Settings → API Keys & Webhooks**, set the webhook URL to `https://<your-domain>/api/paystack/webhook`. The webhook is the source of truth; the browser callback (`/payment/callback`) is a verify-and-redirect fallback.
+4. Payment flow: booking request → admin confirms → student pays → webhook records the payment (idempotent, amount-validated). Paid bookings show a "Paid" badge in both dashboards, and students can no longer self-cancel them — refunds go through the team.
 
 ### Install & Run
 

@@ -18,7 +18,7 @@ export default async function AdminBookingsPage({
 
   let query = supabase
     .from("bookings")
-    .select("*, rooms(name), properties(title, slug, campus_id), profiles(full_name)")
+    .select("*, rooms(name), properties(title, slug, campus_id), profiles(full_name), payments(id, status)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
@@ -114,6 +114,13 @@ export default async function AdminBookingsPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <p className="font-medium">₦{booking.total_amount?.toLocaleString()}</p>
+                        {booking.payments?.some((p) => p.status === "success") ? (
+                          <Badge variant="outline" className="mt-1 bg-success/10 text-success border-success/20">
+                            Paid
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Unpaid</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <BookingActions bookingId={booking.id} status={booking.status} />
