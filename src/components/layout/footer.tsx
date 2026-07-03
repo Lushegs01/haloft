@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Shield, MapPin, Mail, ExternalLink, Globe, AtSign } from "lucide-react";
+import { HaloftLogo } from "@/components/ui/logo";
 
 export function Footer() {
   return (
@@ -13,15 +14,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-5 lg:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-                <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-inter)" }}>H</span>
-              </div>
-              <span
-                className="text-xl font-bold tracking-tight text-foreground"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
-                Haloft
-              </span>
+              <HaloftLogo size={28} className="transition-transform group-hover:scale-105" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-[240px]">
               The trusted accommodation marketplace built for Nigerian university students.

@@ -11,10 +11,10 @@ import {
   Home,
   LogIn,
   ChevronDown,
-  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { HaloftLogo } from "@/components/ui/logo";
 
 interface HeaderProps {
   campusSlug?: string;
@@ -57,17 +57,9 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
           {/* Logo */}
           <Link
             href={campusSlug ? `/${campusSlug}` : "/"}
-            className="flex items-center gap-2.5 shrink-0 group"
+            className="flex items-center shrink-0 group"
           >
-            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30 transition-transform group-hover:scale-105">
-              <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-inter)" }}>H</span>
-            </div>
-            <span
-              className="text-xl font-bold tracking-tight text-foreground hidden sm:block"
-              style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-            >
-              Haloft
-            </span>
+            <HaloftLogo size={30} className="transition-transform group-hover:scale-105" />
           </Link>
 
           {/* Centre: pill search bar (campus pages, desktop) */}

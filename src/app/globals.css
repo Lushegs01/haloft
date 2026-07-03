@@ -68,114 +68,123 @@
 }
 
 :root {
-  /* Core palette */
-  --background: #fffbf8;
-  --foreground: #1c1917;
+  /* Core palette — aligned with Haloft logo */
+  --background: #f8fbff;
+  --foreground: #1e3a6e;        /* logo navy */
   --card: #ffffff;
-  --card-foreground: #1c1917;
+  --card-foreground: #1e3a6e;
   --popover: #ffffff;
-  --popover-foreground: #1c1917;
+  --popover-foreground: #1e3a6e;
 
-  /* Brand coral — warmer, richer red-orange */
-  --primary: #e8432d;
+  /* Primary = logo orange dot (#e86530) — used for all CTAs */
+  --primary: #e86530;
   --primary-foreground: #ffffff;
 
-  --secondary: #f5f0ec;
-  --secondary-foreground: #1c1917;
-  --muted: #f5f0ec;
-  --muted-foreground: #78716c;
-  --accent: #fef3ee;
-  --accent-foreground: #1c1917;
+  --secondary: #edf4f8;
+  --secondary-foreground: #1e3a6e;
+  --muted: #edf4f8;
+  --muted-foreground: #6b7fa8;  /* desaturated navy */
+  --accent: #fff4ee;
+  --accent-foreground: #1e3a6e;
 
   --destructive: #dc2626;
-  --border: #e8e0d8;
-  --input: #e8e0d8;
-  --ring: #e8432d;
+  --border: #d8e4f0;
+  --input: #d8e4f0;
+  --ring: #e86530;
   --radius: 0.75rem;
 
   /* Charts */
-  --chart-1: #e8432d;
-  --chart-2: #0d9488;
+  --chart-1: #e86530;
+  --chart-2: #3db8a3;
   --chart-3: #f59e0b;
-  --chart-4: #6366f1;
-  --chart-5: #1c1917;
+  --chart-4: #1e3a6e;
+  --chart-5: #6366f1;
 
-  /* Sidebar */
-  --sidebar: #1c1917;
-  --sidebar-foreground: #f5f0ec;
-  --sidebar-primary: #e8432d;
+  /* Sidebar — logo navy */
+  --sidebar: #1e3a6e;
+  --sidebar-foreground: #e8f0f8;
+  --sidebar-primary: #e86530;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #292524;
-  --sidebar-accent-foreground: #f5f0ec;
-  --sidebar-border: #292524;
-  --sidebar-ring: #e8432d;
+  --sidebar-accent: #162e5a;
+  --sidebar-accent-foreground: #e8f0f8;
+  --sidebar-border: #162e5a;
+  --sidebar-ring: #e86530;
 
-  /* Extended semantic colors */
-  --brand: #e8432d;
+  /* Extended semantic */
+  --brand: #e86530;
   --brand-foreground: #ffffff;
-  --success: #059669;
+  --success: #3db8a3;          /* logo teal */
   --success-foreground: #ffffff;
   --warning: #d97706;
   --warning-foreground: #ffffff;
-  --info: #2563eb;
+  --info: #1e3a6e;             /* logo navy */
   --info-foreground: #ffffff;
-  --rose: #e8432d;
+  --rose: #e86530;
   --rose-foreground: #ffffff;
-  --teal: #0d9488;
+  --teal: #3db8a3;             /* logo teal */
   --teal-foreground: #ffffff;
   --amber: #d97706;
   --amber-foreground: #ffffff;
-  --slate: #1c1917;
+  --slate: #1e3a6e;
   --slate-foreground: #ffffff;
-  --cream: #fffbf8;
-  --cream-foreground: #1c1917;
+  --cream: #f8fbff;
+  --cream-foreground: #1e3a6e;
+
+  /* Logo brand tokens (direct access) */
+  --logo-navy: #1e3a6e;
+  --logo-teal: #3db8a3;
+  --logo-orange: #e86530;
 }
 
 .dark {
-  --background: #0c0a09;
-  --foreground: #faf8f5;
-  --card: #1c1917;
-  --card-foreground: #faf8f5;
-  --popover: #1c1917;
-  --popover-foreground: #faf8f5;
-  --primary: #f05a42;
+  --background: #0a1628;         /* deep navy dark */
+  --foreground: #e8f0fb;
+  --card: #112040;
+  --card-foreground: #e8f0fb;
+  --popover: #112040;
+  --popover-foreground: #e8f0fb;
+  --primary: #f07540;            /* slightly lighter orange for dark */
   --primary-foreground: #ffffff;
-  --secondary: #292524;
-  --secondary-foreground: #faf8f5;
-  --muted: #292524;
-  --muted-foreground: #a8a29e;
-  --accent: #292524;
-  --accent-foreground: #faf8f5;
+  --secondary: #162e5a;
+  --secondary-foreground: #e8f0fb;
+  --muted: #162e5a;
+  --muted-foreground: #8ba5cc;
+  --accent: #162e5a;
+  --accent-foreground: #e8f0fb;
   --destructive: #ef4444;
-  --border: #292524;
-  --input: #292524;
-  --ring: #f05a42;
-  --sidebar: #0c0a09;
-  --sidebar-foreground: #faf8f5;
-  --sidebar-primary: #f05a42;
+  --border: #1e3a6e;
+  --input: #1e3a6e;
+  --ring: #f07540;
+  --sidebar: #071020;
+  --sidebar-foreground: #e8f0fb;
+  --sidebar-primary: #f07540;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1c1917;
-  --sidebar-accent-foreground: #faf8f5;
-  --sidebar-border: #1c1917;
-  --sidebar-ring: #f05a42;
-  --brand: #f05a42;
+  --sidebar-accent: #0e1e3a;
+  --sidebar-accent-foreground: #e8f0fb;
+  --sidebar-border: #0e1e3a;
+  --sidebar-ring: #f07540;
+  --brand: #f07540;
   --brand-foreground: #ffffff;
-  --success: #10b981;
+  --success: #3db8a3;
   --success-foreground: #ffffff;
   --warning: #f59e0b;
-  --warning-foreground: #0c0a09;
-  --info: #3b82f6;
+  --warning-foreground: #0a1628;
+  --info: #60a5fa;
   --info-foreground: #ffffff;
-  --rose: #f05a42;
+  --rose: #f07540;
   --rose-foreground: #ffffff;
-  --teal: #14b8a6;
+  --teal: #4ecab8;
   --teal-foreground: #ffffff;
   --amber: #f59e0b;
-  --amber-foreground: #0c0a09;
-  --slate: #faf8f5;
-  --slate-foreground: #0c0a09;
-  --cream: #1c1917;
-  --cream-foreground: #faf8f5;
+  --amber-foreground: #0a1628;
+  --slate: #e8f0fb;
+  --slate-foreground: #0a1628;
+  --cream: #112040;
+  --cream-foreground: #e8f0fb;
+
+  --logo-navy: #3a6ecc;
+  --logo-teal: #4ecab8;
+  --logo-orange: #f07540;
 }
 
 @layer base {
@@ -196,6 +205,7 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-inter), var(--font-geist-sans), system-ui, sans-serif;
     letter-spacing: -0.02em;
+    color: var(--logo-navy, #1e3a6e);
   }
   button {
     @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
@@ -260,10 +270,10 @@
     padding-bottom: clamp(3rem, 6vw, 6rem);
   }
 
-  /* Gradient decorative */
+  /* Gradient decorative — logo colours */
   .hero-gradient {
-    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgb(232 67 45 / 0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 80% 60%, rgb(249 115 22 / 0.06) 0%, transparent 50%),
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgb(30 58 110 / 0.07) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgb(61 184 163 / 0.06) 0%, transparent 50%),
                 var(--background);
   }
 

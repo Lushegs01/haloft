@@ -2,21 +2,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Search, ArrowLeft } from "lucide-react";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
+import { HaloftLogo } from "@/components/ui/logo";
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 text-center">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2.5 mb-12">
-        <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-          <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-inter)" }}>H</span>
-        </div>
-        <span
-          className="text-xl font-bold text-foreground"
-          style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-        >
-          Haloft
-        </span>
+      <Link href="/" className="mb-12">
+        <HaloftLogo size={30} />
       </Link>
 
       {/* 404 number */}

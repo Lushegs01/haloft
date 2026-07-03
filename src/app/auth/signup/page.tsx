@@ -20,6 +20,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { HaloftLogo, HaloftLogoDark } from "@/components/ui/logo";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -71,13 +72,8 @@ export default function SignUpPage() {
         </div>
 
         <div className="relative">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <span className="text-white font-bold" style={{ fontFamily: "var(--font-inter)" }}>H</span>
-            </div>
-            <span className="text-xl font-bold" style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}>
-              Haloft
-            </span>
+          <Link href="/">
+            <HaloftLogoDark size={34} />
           </Link>
         </div>
 
@@ -134,13 +130,8 @@ export default function SignUpPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-                <span className="text-white font-bold" style={{ fontFamily: "var(--font-inter)" }}>H</span>
-              </div>
-              <span className="text-xl font-bold text-foreground" style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}>
-                Haloft
-              </span>
+            <Link href="/">
+              <HaloftLogo size={34} />
             </Link>
           </div>
 

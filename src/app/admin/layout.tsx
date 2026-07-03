@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react";
+import { HaloftLogoDark } from "@/components/ui/logo";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -61,20 +62,7 @@ export default async function AdminLayout({
         {/* Brand */}
         <div className="px-5 py-5 border-b border-sidebar-border">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-              <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-inter)" }}>H</span>
-            </div>
-            <div>
-              <span
-                className="text-lg font-bold text-sidebar-foreground tracking-tight"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
-                Haloft
-              </span>
-              <span className="ml-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-                Admin
-              </span>
-            </div>
+            <HaloftLogoDark size={30} />
           </Link>
         </div>
 
