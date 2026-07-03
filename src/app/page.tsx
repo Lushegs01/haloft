@@ -4,15 +4,12 @@ import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import {
   Building2,
-  Search,
   Shield,
   Wallet,
   MapPin,
   Users,
   ArrowRight,
-  Star,
   CheckCircle2,
-  Zap,
   ChevronRight,
 } from "lucide-react";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
@@ -126,39 +123,21 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Social proof */}
-              <div className="flex items-center justify-center gap-6 animate-fade-in stagger-3">
-                <div className="flex -space-x-2">
-                  {["E", "A", "K", "S"].map((l, i) => (
-                    <div
-                      key={i}
-                      className="h-8 w-8 rounded-full border-2 border-background flex items-center justify-center text-xs font-bold text-white"
-                      style={{
-                        background: ["#e8432d", "#059669", "#2563eb", "#d97706"][i],
-                      }}
-                    >
-                      {l}
-                    </div>
-                  ))}
+              {/* Trust signals */}
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in stagger-3">
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4 text-primary" />
+                  Every listing inspected in person
                 </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className="h-3.5 w-3.5 fill-amber text-amber" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    <span className="font-semibold text-foreground">500+</span> students housed
-                  </p>
-                </div>
-                <div className="w-px h-8 bg-border hidden sm:block" />
-                <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
+                <div className="w-px h-4 bg-border hidden sm:block" />
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4 text-success" />
                   No agent fees
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Zap className="h-4 w-4 text-amber" />
-                  Instant confirmation
+                <div className="w-px h-4 bg-border hidden sm:block" />
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Wallet className="h-4 w-4 text-amber" />
+                  Transparent pricing
                 </div>
               </div>
             </div>
@@ -217,7 +196,7 @@ export default function HomePage() {
                 Book in 3 simple steps
               </h2>
               <p className="text-muted-foreground text-lg">
-                From search to move-in, we've streamlined every step.
+                From search to move-in, we&apos;ve streamlined every step.
               </p>
             </div>
 
@@ -267,8 +246,8 @@ export default function HomePage() {
               {[
                 { icon: Shield, text: "Verified listings" },
                 { icon: Wallet, text: "No hidden fees" },
-                { icon: Star, text: "Real student reviews" },
-                { icon: Zap, text: "Instant confirmation" },
+                { icon: MapPin, text: "Close to campus" },
+                { icon: CheckCircle2, text: "Team-reviewed bookings" },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2 text-white/90 text-sm">
                   <Icon className="h-4 w-4 text-white/70" />

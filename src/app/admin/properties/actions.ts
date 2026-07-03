@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminUser } from "@/lib/auth/admin";
 import { z } from "zod";
 
 const propertySchema = z.object({
@@ -21,26 +22,6 @@ const propertySchema = z.object({
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
 });
-
-async function getAdminUser(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || (profile.role !== "admin" && profile.role !== "super_admin")) {
-    return null;
-  }
-
-  return user;
-}
 
 export async function createProperty(formData: FormData) {
   const supabase = await createClient();

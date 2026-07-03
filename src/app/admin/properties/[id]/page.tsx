@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { PropertyForm } from "../property-form";
 import { MediaManager } from "./media-manager";
+import { RoomsManager } from "./rooms/rooms-manager";
 
 export default async function EditPropertyPage({
   params,
@@ -60,6 +61,13 @@ export default async function EditPropertyPage({
     .is("deleted_at", null)
     .order("display_order", { ascending: true });
 
+  const { data: rooms } = await supabase
+    .from("rooms")
+    .select("*")
+    .eq("property_id", id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+
   return (
     <div className="space-y-8">
       <PropertyForm
@@ -68,6 +76,7 @@ export default async function EditPropertyPage({
         neighbourhoods={neighbourhoods ?? []}
         landlords={landlords ?? []}
       />
+      <RoomsManager propertyId={property.id} initialRooms={rooms ?? []} />
       <MediaManager propertyId={property.id} initialMedia={media ?? []} />
     </div>
   );
