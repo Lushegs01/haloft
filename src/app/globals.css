@@ -343,6 +343,44 @@
   .stagger-2 { animation-delay: 0.1s; }
   .stagger-3 { animation-delay: 0.15s; }
   .stagger-4 { animation-delay: 0.2s; }
+
+  /* ── Airbnb-grade additions ──────────────────────────── */
+
+  /* Property card — Airbnb-style image ratio */
+  .property-card-img {
+    aspect-ratio: 20 / 13;
+  }
+  /* Pill button style */
+  .btn-pill {
+    @apply rounded-full font-semibold transition-all duration-200;
+  }
+  /* Divider with flair */
+  .section-divider {
+    @apply h-px bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+  /* Premium shadow */
+  .shadow-premium {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06), 0 24px 48px rgba(0,0,0,0.04);
+  }
+  /* Photo grid Airbnb-style */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 480px;
+  }
+  .photo-grid > :first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  /* Booking widget */
+  .booking-widget {
+    @apply sticky top-24 rounded-3xl border border-border bg-card p-6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06), 0 24px 48px rgba(0,0,0,0.04);
+  }
 }
 
 /* Quality floor: honour reduced-motion preferences */

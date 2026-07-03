@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,8 @@ import {
   Layers,
   LayoutGrid,
   CheckCircle2,
+  Heart,
 } from "lucide-react";
-import Image from "next/image";
 
 const amenityIcons: Record<string, React.ReactNode> = {
   wifi: <Wifi className="h-3.5 w-3.5" />,
@@ -48,6 +49,9 @@ const propertyTypeConfig = [
   { value: "self_contained", label: "Self Contained", icon: Layers },
   { value: "studio", label: "Studio", icon: LayoutGrid },
 ];
+
+// Hero background for campus page
+const campusHeroBg = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&h=600&fit=crop";
 
 export default async function CampusHomePage({
   params,
@@ -89,30 +93,37 @@ export default async function CampusHomePage({
   return (
     <div className="flex flex-col pb-16 md:pb-0">
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <section className="relative hero-gradient overflow-hidden">
-        <div className="pointer-events-none absolute -top-20 -right-20 h-[300px] w-[300px] rounded-full bg-primary/8 blur-3xl" />
-        <div className="container mx-auto px-4 lg:px-8 py-12 lg:py-20">
+      {/* ── Hero with real photo background ───────────────── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src={campusHeroBg}
+            alt="Campus area"
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
+        </div>
+        <div className="relative container mx-auto px-4 lg:px-8 py-16 lg:py-24">
           <div className="max-w-2xl mx-auto text-center">
-            <p className="text-primary font-medium text-sm mb-3 animate-fade-in">
+            <p className="text-white/70 font-medium text-sm mb-3 animate-fade-in">
               {campusData.name} · {campusData.universities.name}
             </p>
-            <h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-4 animate-slide-up"
-              style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-            >
+            <h1 className="heading-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 animate-slide-up">
               Find accommodation near{" "}
-              <span className="gradient-text">{campusData.universities.name}</span>
+              <span className="text-primary">{campusData.universities.name}</span>
             </h1>
-            <p className="text-muted-foreground text-lg mb-8 animate-slide-up stagger-1">
+            <p className="text-white/70 text-lg mb-8 animate-slide-up stagger-1">
               {featuredProperties?.length ?? 0}+ verified properties — real photos, honest prices.
             </p>
 
-            {/* Search bar */}
+            {/* Search bar — white rounded-2xl with shadow-xl */}
             <form action={`/${campus}/search`} className="animate-slide-up stagger-2">
-              <div className="flex items-center gap-2 rounded-2xl border border-border bg-card shadow-xl shadow-black/8 p-2 max-w-xl mx-auto">
+              <div className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white shadow-xl p-2 max-w-xl mx-auto">
                 <div className="flex-1 flex items-center gap-3 px-3">
-                  <Search className="h-4.5 w-4.5 text-muted-foreground shrink-0" />
+                  <Search className="h-5 w-5 text-muted-foreground shrink-0" />
                   <input
                     name="q"
                     placeholder="Search by name, area, or amenity..."
@@ -161,10 +172,7 @@ export default async function CampusHomePage({
               <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-1">
                 Featured
               </p>
-              <h2
-                className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
+              <h2 className="heading-display text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
                 Top-rated properties
               </h2>
             </div>
@@ -182,10 +190,10 @@ export default async function CampusHomePage({
                 <Link
                   key={property.id}
                   href={`/${campus}/property/${property.slug}`}
-                  className="group rounded-2xl border border-border bg-card overflow-hidden transition-all hover:shadow-xl hover:shadow-black/8 hover:-translate-y-1 card-lift"
+                  className="group cursor-pointer"
                 >
                   {/* Image */}
-                  <div className="relative aspect-[5/4] bg-muted overflow-hidden">
+                  <div className="relative property-card-img overflow-hidden rounded-2xl mb-3">
                     {property.media_url ? (
                       <Image
                         src={property.media_url}
@@ -201,46 +209,52 @@ export default async function CampusHomePage({
                     )}
 
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                    {/* Heart/save */}
+                    <button
+                      className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <Heart className="h-4 w-4 text-foreground/80" />
+                    </button>
 
                     {/* Verified badge */}
                     <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-success/90 backdrop-blur-sm px-2.5 py-1 text-xs font-semibold text-white">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success/90 backdrop-blur-sm px-2 py-1 text-[11px] font-semibold text-white">
                         <CheckCircle2 className="h-3 w-3" />
                         Verified
                       </span>
                     </div>
 
-                    {/* Rating */}
-                    <div className="absolute top-3 right-3">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-black/50 backdrop-blur-sm px-2.5 py-1 text-xs font-semibold text-white">
-                        <Star className="h-3 w-3 fill-amber text-amber" />
-                        {property.avg_rating ?? "New"}
-                      </span>
-                    </div>
-
                     {/* Price overlay */}
                     <div className="absolute bottom-3 right-3">
-                      <div className="rounded-xl bg-black/60 backdrop-blur-sm px-3 py-1.5">
+                      <div className="rounded-xl bg-black/60 backdrop-blur-sm px-3 py-1.5 text-right">
                         <p className="text-white font-bold text-sm">₦{property.min_price?.toLocaleString() ?? "N/A"}</p>
-                        <p className="text-white/70 text-[10px] text-right">/month</p>
+                        <p className="text-white/70 text-[10px]">/month</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Info */}
-                  <div className="p-4">
-                    <h3
-                      className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1 leading-snug"
-                      style={{ fontFamily: "var(--font-inter)" }}
-                    >
-                      {property.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1.5 mb-3">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      {property.neighbourhood_name}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-semibold text-foreground text-sm truncate pr-2 group-hover:text-primary transition-colors">
+                        {property.title}
+                      </h3>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
+                        <span className="text-sm font-medium">{property.avg_rating ?? "New"}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      {property.neighbourhood_name ?? property.address}
                     </p>
-                    <div className="flex flex-wrap gap-1.5">
+                    <p className="text-sm text-muted-foreground">
+                      {property.available_rooms} {property.available_rooms === 1 ? "room" : "rooms"} · {property.property_type?.replace(/_/g, " ")}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
                       {(property.amenities ?? []).slice(0, 3).map((amenity) => (
                         <span
                           key={amenity}
@@ -280,10 +294,7 @@ export default async function CampusHomePage({
               <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-1">
                 Explore areas
               </p>
-              <h2
-                className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
+              <h2 className="heading-display text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
                 Popular neighbourhoods
               </h2>
             </div>
@@ -292,24 +303,22 @@ export default async function CampusHomePage({
                 <Link
                   key={area.id}
                   href={`/${campus}/search?neighbourhood=${area.id}`}
-                  className="group relative rounded-2xl border border-border bg-card p-5 transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5"
-                >
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                    <MapPin className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3
-                    className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm"
-                    style={{ fontFamily: "var(--font-inter)" }}
-                  >
-                    {area.name}
-                  </h3>
-                  {area.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                      {area.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-1 mt-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity text-xs font-medium">
-                    Browse <ArrowRight className="h-3 w-3" />
+                  className="group relative rounded-2xl overflow-hidden h-[200px] flex flex-col justify-end no-underline"
+ >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+                  <div className="relative p-5">
+                    <h3 className="font-bold text-white text-sm mb-1">
+                      {area.name}
+                    </h3>
+                    {area.description && (
+                      <p className="text-xs text-white/70 line-clamp-2 leading-relaxed">
+                        {area.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-1 mt-2 text-white/80 group-hover:text-white transition-colors text-xs font-medium">
+                      Browse <ArrowRight className="h-3 w-3" />
+                    </div>
                   </div>
                 </Link>
               ))}

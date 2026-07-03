@@ -63,26 +63,31 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex">
 
-      {/* ── Left: Decorative panel ────────────────────── */}
-      <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col justify-between bg-gradient-to-br from-primary via-primary/95 to-orange-600 p-12 text-white shrink-0">
+      {/* ── Left: Branding panel ────────────────────── */}
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col justify-between bg-night p-12 text-white shrink-0">
         {/* Background pattern */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
           <div className="absolute bottom-20 -right-20 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
+          {/* Large watermark roofline */}
+          <div className="absolute bottom-0 right-0 opacity-[0.04] translate-x-20 translate-y-20">
+            <svg width="400" height="400" viewBox="0 0 420 420" fill="none">
+              <path d="M 113 297 A 138 138 0 1 1 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" />
+              <path d="M 113 297 L 210 190 L 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="210" cy="190" r="14" fill="var(--logo-orange)" />
+            </svg>
+          </div>
         </div>
 
         <div className="relative">
           <Link href="/">
-            <HaloftLogoDark size={34} />
+            <HaloftLogoDark size={38} />
           </Link>
         </div>
 
         <div className="relative space-y-8">
           <div>
-            <h2
-              className="text-4xl font-extrabold leading-tight mb-4"
-              style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-            >
+            <h2 className="text-4xl font-extrabold leading-tight mb-4 heading-display">
               The smartest way to find student housing
             </h2>
             <p className="text-white/75 text-lg leading-relaxed">
@@ -97,13 +102,26 @@ export default function SignInPage() {
               { icon: Users, text: "500+ students already housed through Haloft" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3 text-white/90">
-                <div className="h-8 w-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
                   <Icon className="h-4 w-4 text-white" />
                 </div>
                 <p className="text-sm">{text}</p>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Floating testimonial */}
+        <div className="relative rounded-2xl bg-white/10 backdrop-blur-sm p-5 border border-white/10">
+          <div className="flex gap-0.5 mb-2">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star key={s} className="h-4 w-4 fill-white/80 text-white/80" />
+            ))}
+          </div>
+          <p className="text-white/90 text-sm italic leading-relaxed">
+            &quot;Found my hostel in 20 minutes. No agents, no stress — just great options close to campus.&quot;
+          </p>
+          <p className="text-white/60 text-xs mt-2">— Adaeze O., FUNAAB student</p>
         </div>
 
         <p className="relative text-white/40 text-xs">
@@ -113,7 +131,7 @@ export default function SignInPage() {
 
       {/* ── Right: Form ───────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-12 bg-background">
-        <div className="w-full max-w-md animate-fade-in">
+        <div className="w-full max-w-sm animate-fade-in">
 
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
@@ -123,10 +141,7 @@ export default function SignInPage() {
           </div>
 
           <div className="mb-8">
-            <h1
-              className="text-3xl font-extrabold text-foreground"
-              style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-            >
+            <h1 className="text-3xl font-extrabold text-foreground heading-display">
               Welcome back
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -146,7 +161,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-12 rounded-xl border-border bg-muted/30 focus:bg-background text-base"
+                className="h-12 rounded-xl border-border focus:border-primary/50 focus:ring-2 focus:ring-primary/20 text-base"
               />
             </div>
 
@@ -167,7 +182,7 @@ export default function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 rounded-xl border-border bg-muted/30 focus:bg-background text-base pr-12"
+                  className="h-12 rounded-xl border-border focus:border-primary/50 focus:ring-2 focus:ring-primary/20 text-base pr-12"
                 />
                 <button
                   type="button"
@@ -181,7 +196,7 @@ export default function SignInPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 rounded-xl text-base font-bold shadow-md shadow-primary/20 gap-2 group"
+              className="w-full h-12 rounded-full text-base font-bold shadow-md shadow-primary/20 gap-2 group active:scale-95 transition-transform"
               disabled={loading}
             >
               {loading ? (
@@ -207,7 +222,7 @@ export default function SignInPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 rounded-xl text-base font-medium border-border"
+            className="w-full h-12 rounded-full text-base font-medium border-border"
             onClick={handleMagicLink}
             disabled={loading}
           >

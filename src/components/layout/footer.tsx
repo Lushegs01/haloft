@@ -1,71 +1,50 @@
 import Link from "next/link";
-import { Shield, MapPin, Mail, ExternalLink, Globe, AtSign } from "lucide-react";
-import { HaloftLogo } from "@/components/ui/logo";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowRight,
+  Globe,
+  AtSign,
+  ExternalLink,
+} from "lucide-react";
+import { HaloftLogo, HaloftLogoDark } from "@/components/ui/logo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-muted/30 mt-auto">
+    <footer className="bg-night text-night-foreground mt-auto">
       {/* Top gradient accent */}
-      <div className="h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-      <div className="container mx-auto px-4 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-
-          {/* Brand */}
-          <div className="space-y-5 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <HaloftLogo size={28} className="transition-transform group-hover:scale-105" />
-            </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-[240px]">
-              The trusted accommodation marketplace built for Nigerian university students.
-            </p>
-            <div className="flex items-center gap-3">
-              <a
-                href="#"
-                className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
-                aria-label="Instagram"
-              >
-                <AtSign className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href="#"
-                className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
-                aria-label="Twitter"
-              >
-                <Globe className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href="#"
-                className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
-                aria-label="LinkedIn"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+      {/* Newsletter + Logo row */}
+      <div className="container mx-auto px-4 lg:px-8 pt-12 pb-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <HaloftLogoDark size={32} />
+            <div>
+              <p className="text-white font-bold text-lg heading-display">Haloft</p>
+              <p className="text-night-foreground/60 text-sm">Trusted student accommodation, simplified.</p>
             </div>
           </div>
-
-          {/* Students */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground/60">For Students</h3>
-            <ul className="space-y-2.5">
-              {[
-                { label: "Find Accommodation", href: "/" },
-                { label: "How It Works", href: "/" },
-                { label: "Safety Guide", href: "/" },
-                { label: "Student FAQs", href: "/" },
-              ].map((l) => (
-                <li key={l.label}>
-                  <Link href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div className="flex items-center gap-2 w-full max-w-md">
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              className="h-11 rounded-full bg-night-foreground/5 border-night-foreground/10 text-night-foreground placeholder:text-night-foreground/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+            />
+            <Button className="h-11 rounded-full px-5 font-semibold shrink-0">
+              Subscribe
+              <ArrowRight className="h-4 w-4 ml-1.5" />
+            </Button>
           </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 lg:px-8 pb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 lg:gap-12">
 
           {/* Company */}
           <div className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground/60">Company</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-night-foreground/50">Company</h3>
             <ul className="space-y-2.5">
               {[
                 { label: "About Haloft", href: "/" },
@@ -74,7 +53,7 @@ export function Footer() {
                 { label: "Contact Us", href: "/" },
               ].map((l) => (
                 <li key={l.label}>
-                  <Link href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href={l.href} className="text-sm text-night-foreground/70 hover:text-night-foreground transition-colors">
                     {l.label}
                   </Link>
                 </li>
@@ -82,46 +61,93 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Trust & Safety */}
+          {/* Explore */}
           <div className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground/60">Trust &amp; Safety</h3>
-            <ul className="space-y-3.5">
-              <li className="flex items-start gap-2.5">
-                <div className="h-5 w-5 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Shield className="h-3 w-3 text-success" />
-                </div>
-                <span className="text-sm text-muted-foreground">All properties physically verified</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <MapPin className="h-3 w-3 text-primary" />
-                </div>
-                <span className="text-sm text-muted-foreground">Accurate locations, no surprises</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <div className="h-5 w-5 rounded-full bg-info/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Mail className="h-3 w-3 text-info" />
-                </div>
-                <span className="text-sm text-muted-foreground">Student support team available</span>
-              </li>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-night-foreground/50">Explore</h3>
+            <ul className="space-y-2.5">
+              {[
+                { label: "Find Accommodation", href: "/" },
+                { label: "How It Works", href: "/" },
+                { label: "Safety Guide", href: "/" },
+                { label: "Student FAQs", href: "/" },
+              ].map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-sm text-night-foreground/70 hover:text-night-foreground transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-night-foreground/50">Support</h3>
+            <ul className="space-y-2.5">
+              {[
+                { label: "Help Centre", href: "/" },
+                { label: "Cancellation Options", href: "/legal/refunds" },
+                { label: "Report a Listing", href: "/" },
+                { label: "Host Resources", href: "/" },
+              ].map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-sm text-night-foreground/70 hover:text-night-foreground transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-night-foreground/50">Legal</h3>
+            <ul className="space-y-2.5">
+              {[
+                { label: "Privacy Policy", href: "/legal/privacy" },
+                { label: "Terms of Service", href: "/legal/terms" },
+                { label: "Refund Policy", href: "/legal/refunds" },
+                { label: "Cookie Policy", href: "/" },
+              ].map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-sm text-night-foreground/70 hover:text-night-foreground transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
+      </div>
 
-        <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
+      {/* Bottom bar */}
+      <div className="border-t border-night-foreground/10">
+        <div className="container mx-auto px-4 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-night-foreground/50">
             © {new Date().getFullYear()} Haloft Technologies Ltd. All rights reserved.
           </p>
-          <div className="flex gap-6">
-            {[
-              { label: "Privacy", href: "/legal/privacy" },
-              { label: "Terms", href: "/legal/terms" },
-              { label: "Refunds", href: "/legal/refunds" },
-            ].map((l) => (
-              <Link key={l.label} href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {l.label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-3">
+            <a
+              href="#"
+              className="h-9 w-9 rounded-full bg-night-foreground/5 flex items-center justify-center text-night-foreground/50 hover:bg-night-foreground/10 hover:text-night-foreground transition-colors"
+              aria-label="Twitter"
+            >
+              <AtSign className="h-4 w-4" />
+            </a>
+            <a
+              href="#"
+              className="h-9 w-9 rounded-full bg-night-foreground/5 flex items-center justify-center text-night-foreground/50 hover:bg-night-foreground/10 hover:text-night-foreground transition-colors"
+              aria-label="Instagram"
+            >
+              <Globe className="h-4 w-4" />
+            </a>
+            <a
+              href="#"
+              className="h-9 w-9 rounded-full bg-night-foreground/5 flex items-center justify-center text-night-foreground/50 hover:bg-night-foreground/10 hover:text-night-foreground transition-colors"
+              aria-label="LinkedIn"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
           </div>
         </div>
       </div>

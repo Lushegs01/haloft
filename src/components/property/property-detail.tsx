@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2,
   MapPin,
@@ -78,10 +79,10 @@ export function PropertyDetailPage({
   reviews,
   campusSlug,
 }: PropertyDetailPageProps) {
-  const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
 
   const avgRating = property.avg_rating ?? 0;
   const reviewCount = property.review_count ?? 0;
@@ -93,10 +94,28 @@ export function PropertyDetailPage({
 
   const closeLightbox = () => setLightboxOpen(false);
 
-  const prevImage = () =>
+  const prevImage = useCallback(() => {
     setLightboxIndex((i) => (i - 1 + media.length) % media.length);
-  const nextImage = () =>
+  }, [media.length]);
+
+  const nextImage = useCallback(() => {
     setLightboxIndex((i) => (i + 1) % media.length);
+  }, [media.length]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prevImage();
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "Escape") closeLightbox();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxOpen, prevImage, nextImage]);
+
+  const aboutText = property.description ?? "No description available.";
+  const aboutLong = aboutText.length > 200;
 
   return (
     <div className="flex flex-col min-h-full pb-16 md:pb-0">
@@ -112,10 +131,10 @@ export function PropertyDetailPage({
               <ArrowLeft className="h-4 w-4" />
               Back to search
             </Link>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsFavorite(!isFavorite)}
-                className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium border transition-all hover:bg-muted ${
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all hover:bg-muted ${
                   isFavorite
                     ? "text-primary border-primary/30 bg-primary/5"
                     : "text-foreground border-border"
@@ -124,7 +143,7 @@ export function PropertyDetailPage({
                 <Heart className={`h-4 w-4 ${isFavorite ? "fill-primary text-primary" : ""}`} />
                 <span className="hidden sm:inline">{isFavorite ? "Saved" : "Save"}</span>
               </button>
-              <button className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium border border-border text-foreground hover:bg-muted transition-all">
+              <button className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium border border-border text-foreground hover:bg-muted transition-all">
                 <Share2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Share</span>
               </button>
@@ -138,11 +157,11 @@ export function PropertyDetailPage({
         {/* ── Gallery ───────────────────────────────────────── */}
         {media.length > 0 ? (
           <div className="relative mb-8">
-            {/* Desktop: 1 large + 4 grid */}
-            <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-2.5 h-[480px] rounded-2xl overflow-hidden">
+            {/* Desktop: photo grid */}
+            <div className="hidden lg:block photo-grid">
               {/* Main large image */}
               <button
-                className="col-span-2 row-span-2 relative bg-muted hover:opacity-95 transition-opacity"
+                className="relative bg-muted hover:opacity-95 transition-opacity cursor-zoom-in overflow-hidden"
                 onClick={() => openLightbox(0)}
               >
                 {media[0] && (
@@ -161,7 +180,7 @@ export function PropertyDetailPage({
                 <button
                   key={i}
                   onClick={() => openLightbox(i + 1)}
-                  className="relative bg-muted hover:opacity-95 transition-opacity"
+                  className="relative bg-muted hover:opacity-95 transition-opacity cursor-zoom-in overflow-hidden"
                 >
                   <Image
                     src={m.url}
@@ -185,22 +204,28 @@ export function PropertyDetailPage({
             </div>
 
             {/* Mobile: horizontal scroll */}
-            <div className="lg:hidden flex gap-3 overflow-x-auto scrollbar-hide rounded-2xl">
-              {media.map((m, i) => (
-                <button
-                  key={i}
-                  onClick={() => openLightbox(i)}
-                  className="relative flex-shrink-0 w-72 aspect-[4/3] rounded-xl overflow-hidden bg-muted"
-                >
-                  <Image
-                    src={m.url}
-                    alt={m.alt_text ?? "Property image"}
-                    fill
-                    className="object-cover"
-                    sizes="288px"
-                  />
-                </button>
-              ))}
+            <div className="lg:hidden relative">
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide rounded-2xl snap-x">
+                {media.map((m, i) => (
+                  <button
+                    key={i}
+                    onClick={() => openLightbox(i)}
+                    className="relative flex-shrink-0 w-80 aspect-[4/3] rounded-xl overflow-hidden bg-muted snap-start"
+                  >
+                    <Image
+                      src={m.url}
+                      alt={m.alt_text ?? "Property image"}
+                      fill
+                      className="object-cover"
+                      sizes="320px"
+                    />
+                  </button>
+                ))}
+              </div>
+              {/* Page indicator */}
+              <div className="absolute bottom-3 right-3 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-white">
+                1 / {media.length}
+              </div>
             </div>
           </div>
         ) : (
@@ -230,67 +255,63 @@ export function PropertyDetailPage({
                 </Badge>
               </div>
 
-              <h1
-                className="text-2xl lg:text-3xl font-extrabold tracking-tight text-foreground mb-3"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground mb-3 heading-display">
                 {property.title}
               </h1>
 
               <div className="flex items-center flex-wrap gap-4">
+                <div className="flex items-center gap-1.5">
+                  <Star className="h-4 w-4 fill-amber text-amber" />
+                  <span className="font-semibold text-foreground">{avgRating || "New"}</span>
+                  <span className="text-muted-foreground text-sm">
+                    ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                  </span>
+                </div>
+                <span className="text-border hidden sm:inline">·</span>
                 <p className="text-muted-foreground flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-primary" />
                   {property.address}
                 </p>
-                {(avgRating > 0 || reviewCount > 0) && (
-                  <div className="flex items-center gap-1.5">
-                    <Star className="h-4 w-4 fill-amber text-amber" />
-                    <span className="font-semibold text-foreground">{avgRating || "New"}</span>
-                    <span className="text-muted-foreground text-sm">
-                      ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-border" />
+            <div className="section-divider" />
 
             {/* About */}
             <div>
-              <h2
-                className="text-xl font-bold mb-4 text-foreground"
-                style={{ fontFamily: "var(--font-inter)" }}
-              >
+              <h2 className="text-xl font-bold mb-4 text-foreground heading-display">
                 About this property
               </h2>
-              <p className="text-muted-foreground leading-relaxed text-base">
-                {property.description ?? "No description available."}
+              <p className={`text-muted-foreground leading-relaxed text-base ${aboutExpanded ? "" : "line-clamp-3"}`}>
+                {aboutText}
               </p>
+              {aboutLong && (
+                <button
+                  onClick={() => setAboutExpanded(!aboutExpanded)}
+                  className="mt-2 text-sm font-semibold text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                >
+                  {aboutExpanded ? "Show less" : "Read more"}
+                </button>
+              )}
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-border" />
+            <div className="section-divider" />
 
-            {/* Amenities */}
+            {/* Amenities — 3-col desktop, 2-col mobile, icon in square */}
             <div>
-              <h2
-                className="text-xl font-bold mb-5 text-foreground"
-                style={{ fontFamily: "var(--font-inter)" }}
-              >
+              <h2 className="text-xl font-bold mb-5 text-foreground heading-display">
                 What this place offers
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {(property.amenities ?? []).map((amenity) => (
                   <div
                     key={amenity}
-                    className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5"
+                    className="flex flex-col items-center text-center gap-2 rounded-xl border border-border bg-card p-4"
                   >
-                    <span className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <span className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                       {amenityIcons[amenity] ?? <CheckCircle2 className="h-4 w-4" />}
                     </span>
-                    <span className="text-sm font-medium text-foreground">
+                    <span className="text-xs font-medium text-foreground">
                       {formatAmenityLabel(amenity)}
                     </span>
                   </div>
@@ -301,12 +322,9 @@ export function PropertyDetailPage({
             {/* House Rules */}
             {(property.rules ?? []).length > 0 && (
               <>
-                <div className="h-px bg-border" />
+                <div className="section-divider" />
                 <div>
-                  <h2
-                    className="text-xl font-bold mb-4 text-foreground"
-                    style={{ fontFamily: "var(--font-inter)" }}
-                  >
+                  <h2 className="text-xl font-bold mb-4 text-foreground heading-display">
                     House rules
                   </h2>
                   <ul className="space-y-3">
@@ -321,15 +339,11 @@ export function PropertyDetailPage({
               </>
             )}
 
-            {/* Divider */}
-            <div className="h-px bg-border" />
+            <div className="section-divider" />
 
             {/* Rooms */}
             <div>
-              <h2
-                className="text-xl font-bold mb-5 text-foreground"
-                style={{ fontFamily: "var(--font-inter)" }}
-              >
+              <h2 className="text-xl font-bold mb-5 text-foreground heading-display">
                 Available rooms{rooms.length > 0 ? ` (${rooms.length})` : ""}
               </h2>
               {rooms.length > 0 ? (
@@ -337,26 +351,21 @@ export function PropertyDetailPage({
                   {rooms.map((room) => (
                     <div
                       key={room.id}
-                      className="rounded-2xl border border-border bg-card p-5 hover:shadow-md transition-all"
+                      className="rounded-2xl border border-border bg-card p-5 hover:shadow-lg hover:shadow-black/5 transition-all"
                     >
-                      <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h4
-                            className="font-bold text-foreground"
-                            style={{ fontFamily: "var(--font-inter)" }}
-                          >
+                          <h4 className="font-bold text-foreground heading-display">
                             {room.name}
                           </h4>
-                          <p className="text-sm text-muted-foreground mt-0.5 capitalize">
-                            {room.room_type?.replace("_", " ")} · {room.max_occupancy ?? 1} person
-                            {(room.max_occupancy ?? 1) > 1 ? "s" : ""}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-primary text-lg">
-                            ₦{room.price_per_month?.toLocaleString()}
-                          </p>
-                          <p className="text-xs text-muted-foreground">/month</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="rounded-full text-xs capitalize">
+                              {room.room_type?.replace("_", " ")}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {room.max_occupancy ?? 1} person{(room.max_occupancy ?? 1) > 1 ? "s" : ""}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mb-4">
@@ -370,14 +379,21 @@ export function PropertyDetailPage({
                           </span>
                         ))}
                       </div>
-                      <Link
-                        href={`/${campusSlug}/property/${property.slug}/booking?room=${room.id}`}
-                        className="block"
-                      >
-                        <Button className="w-full rounded-xl font-semibold" size="sm">
-                          Book This Room
-                        </Button>
-                      </Link>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xl font-bold text-primary heading-display">
+                            ₦{room.price_per_month?.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">/month</p>
+                        </div>
+                        <Link
+                          href={`/${campusSlug}/property/${property.slug}/booking?room=${room.id}`}
+                        >
+                          <Button className="rounded-full font-semibold" size="sm">
+                            Book This Room
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -391,22 +407,18 @@ export function PropertyDetailPage({
             </div>
 
             {/* Reviews */}
-            <div className="h-px bg-border" />
+            <div className="section-divider" />
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <h2
-                  className="text-xl font-bold text-foreground"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
-                  Student reviews
-                </h2>
-                {reviewCount > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <Star className="h-4 w-4 fill-amber text-amber" />
-                    <span className="font-bold text-foreground">{avgRating}</span>
-                    <span className="text-muted-foreground text-sm">({reviewCount})</span>
-                  </div>
-                )}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <Star className="h-6 w-6 fill-amber text-amber" />
+                  <span className="text-3xl font-bold text-foreground heading-display">{avgRating || "New"}</span>
+                </div>
+                <div className="h-8 w-px bg-border" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{reviewCount} {reviewCount === 1 ? "review" : "reviews"}</p>
+                  <p className="text-xs text-muted-foreground">From verified students</p>
+                </div>
               </div>
 
               {reviews.length > 0 ? (
@@ -460,14 +472,11 @@ export function PropertyDetailPage({
 
           {/* ── Booking Sidebar ───────────────────────────── */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl border border-border bg-card shadow-xl shadow-black/8 p-6">
+            <div className="booking-widget">
               {/* Price */}
               <div className="mb-5">
                 <p className="text-sm text-muted-foreground">Starting from</p>
-                <p
-                  className="text-3xl font-extrabold text-foreground mt-1"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
+                <p className="text-3xl font-bold text-foreground mt-1 heading-display">
                   ₦{property.min_price?.toLocaleString() ?? "N/A"}
                   <span className="text-base font-normal text-muted-foreground"> /month</span>
                 </p>
@@ -482,6 +491,20 @@ export function PropertyDetailPage({
                 </div>
               )}
 
+              {/* Date picker hint */}
+              <div className="rounded-xl border border-border mb-5 overflow-hidden">
+                <div className="flex">
+                  <div className="flex-1 p-3 border-r border-border">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Move-in</p>
+                    <p className="text-sm text-foreground font-medium mt-0.5">Add date</p>
+                  </div>
+                  <div className="flex-1 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Duration</p>
+                    <p className="text-sm text-foreground font-medium mt-0.5">Select</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Trust points */}
               <div className="space-y-3 mb-6">
                 {[
@@ -491,15 +514,15 @@ export function PropertyDetailPage({
                   { icon: CheckCircle2, label: "What you see is what you get" },
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="h-7 w-7 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Icon className="h-3.5 w-3.5 text-foreground" />
+                    <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <Icon className="h-4 w-4 text-foreground" />
                     </div>
                     {label}
                   </div>
                 ))}
               </div>
 
-              <Button className="w-full rounded-xl h-12 font-bold text-base shadow-md shadow-primary/20" size="lg">
+              <Button className="w-full rounded-full h-14 font-bold text-base shadow-md shadow-primary/20 active:scale-95 transition-transform" size="lg">
                 Check Availability
               </Button>
 
@@ -507,8 +530,15 @@ export function PropertyDetailPage({
                 You won&apos;t be charged yet. Availability confirmed instantly.
               </p>
 
-              {/* Report link */}
+              {/* Contact host */}
               <div className="mt-4 pt-4 border-t border-border text-center">
+                <button className="text-sm text-foreground font-semibold underline underline-offset-4 hover:text-primary transition-colors">
+                  Contact host
+                </button>
+              </div>
+
+              {/* Report link */}
+              <div className="mt-3 text-center">
                 <button className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors">
                   Report this listing
                 </button>
@@ -518,43 +548,105 @@ export function PropertyDetailPage({
         </div>
       </div>
 
-      {/* ── Lightbox ──────────────────────────────────────── */}
-      {lightboxOpen && media.length > 0 && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center">
-          <button
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <button
-            onClick={prevImage}
-            className="absolute left-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={nextImage}
-            className="absolute right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          <div className="relative w-full max-w-4xl mx-4 aspect-[4/3]">
-            <Image
-              src={media[lightboxIndex]?.url ?? ""}
-              alt={media[lightboxIndex]?.alt_text ?? "Property image"}
-              fill
-              className="object-contain"
-              sizes="90vw"
-            />
-          </div>
-
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-            {lightboxIndex + 1} / {media.length}
+      {/* ── Mobile Fixed Bottom Bar ──────────────────────── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border px-4 py-3 flex items-center justify-between gap-4 safe-area-pb">
+        <div>
+          <p className="text-lg font-bold text-foreground heading-display">
+            ₦{property.min_price?.toLocaleString() ?? "N/A"}
+            <span className="text-sm font-normal text-muted-foreground"> /month</span>
           </p>
+          {avgRating > 0 && (
+            <div className="flex items-center gap-1">
+              <Star className="h-3.5 w-3.5 fill-amber text-amber" />
+              <span className="text-xs text-muted-foreground">{avgRating} · {reviewCount} reviews</span>
+            </div>
+          )}
         </div>
-      )}
+        <Button className="rounded-full h-12 px-6 font-bold text-base shadow-md shadow-primary/20 active:scale-95 transition-transform">
+          Check Availability
+        </Button>
+      </div>
+
+      {/* ── Lightbox ──────────────────────────────────────── */}
+      <AnimatePresence>
+        {lightboxOpen && media.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
+          >
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-4 py-3">
+              <p className="text-white/60 text-sm">
+                {lightboxIndex + 1} / {media.length}
+              </p>
+              <button
+                onClick={closeLightbox}
+                className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Main image */}
+            <div className="flex-1 flex items-center justify-center px-4 relative">
+              <button
+                onClick={prevImage}
+                className="absolute left-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors z-10"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              <motion.div
+                key={lightboxIndex}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="relative w-full max-w-4xl aspect-[4/3]"
+              >
+                <Image
+                  src={media[lightboxIndex]?.url ?? ""}
+                  alt={media[lightboxIndex]?.alt_text ?? "Property image"}
+                  fill
+                  className="object-contain"
+                  sizes="90vw"
+                />
+              </motion.div>
+
+              <button
+                onClick={nextImage}
+                className="absolute right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors z-10"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Thumbnail strip */}
+            <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+              {media.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => setLightboxIndex(i)}
+                  className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                    i === lightboxIndex ? "border-white" : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <Image
+                    src={m.url}
+                    alt={m.alt_text ?? "Thumbnail"}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

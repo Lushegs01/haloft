@@ -15,9 +15,12 @@ import {
   Phone,
   Mail,
   User,
+  Building2,
   TrendingUp,
+  MapPin,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { CancelBookingButton } from "./cancel-booking-button";
 import { PayNowButton } from "./pay-now-button";
 import { ReviewDialog } from "./review-dialog";
@@ -61,7 +64,7 @@ export default async function StudentDashboardPage({
 
   const { data: favorites } = await supabase
     .from("favorites")
-    .select("*, properties(title, slug, campus_id, min_price, max_price)")
+    .select("*, properties(title, slug, campus_id, min_price, max_price, address)")
     .eq("student_id", user.id)
     .order("created_at", { ascending: false })
     .limit(6);
@@ -127,10 +130,7 @@ export default async function StudentDashboardPage({
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
-              <h1
-                className="text-2xl font-extrabold text-foreground mt-0.5"
-                style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-              >
+              <h1 className="text-2xl font-extrabold text-foreground mt-0.5 heading-display">
                 {profile.full_name ?? "Student"}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
@@ -146,11 +146,11 @@ export default async function StudentDashboardPage({
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             {statsItems.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-border bg-card p-4 text-center">
+              <div key={s.label} className="rounded-2xl border border-border bg-card p-4 text-center shadow-sm">
                 <div className={`h-9 w-9 rounded-xl ${s.bg} flex items-center justify-center mx-auto mb-2`}>
                   <s.icon className={`h-4.5 w-4.5 ${s.color}`} />
                 </div>
-                <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-inter)" }}>
+                <p className="text-2xl font-bold text-foreground heading-display">
                   {s.value}
                 </p>
                 <p className="text-xs text-muted-foreground font-medium mt-0.5">{s.label}</p>
@@ -187,16 +187,13 @@ export default async function StudentDashboardPage({
           <div className="lg:col-span-2 space-y-6">
 
             {/* Bookings */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
               <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Calendar className="h-4 w-4 text-primary" />
                   </div>
-                  <h2
-                    className="font-bold text-foreground"
-                    style={{ fontFamily: "var(--font-inter)" }}
-                  >
+                  <h2 className="font-bold text-foreground heading-display">
                     My Bookings
                   </h2>
                 </div>
@@ -222,11 +219,17 @@ export default async function StudentDashboardPage({
                           className="rounded-xl border border-border bg-muted/20 p-4 hover:bg-muted/40 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="font-semibold text-foreground truncate">
-                                {booking.properties?.title ?? "Property"}
-                              </p>
-                              <p className="text-sm text-muted-foreground mt-0.5">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-semibold text-foreground truncate">
+                                  {booking.properties?.title ?? "Property"}
+                                </p>
+                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${s.color}`}>
+                                  {s.icon}
+                                  {s.label}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
                                 Room: {booking.rooms?.name ?? "N/A"}
                               </p>
                               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -237,14 +240,8 @@ export default async function StudentDashboardPage({
                               </p>
                             </div>
                             <div className="flex flex-col items-end gap-2 shrink-0">
-                              <span
-                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border ${s.color}`}
-                              >
-                                {s.icon}
-                                {s.label}
-                              </span>
                               {isPaid && (
-                                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border bg-success/10 text-success border-success/20">
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold border bg-success/10 text-success border-success/20">
                                   <CheckCircle2 className="h-3 w-3" />
                                   Paid
                                 </span>
@@ -289,15 +286,12 @@ export default async function StudentDashboardPage({
             </div>
 
             {/* Reviews */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
               <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
                 <div className="h-8 w-8 rounded-xl bg-amber/10 flex items-center justify-center">
                   <Star className="h-4 w-4 text-amber" />
                 </div>
-                <h2
-                  className="font-bold text-foreground"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
+                <h2 className="font-bold text-foreground heading-display">
                   My Reviews
                 </h2>
               </div>
@@ -344,15 +338,12 @@ export default async function StudentDashboardPage({
           <div className="space-y-6">
 
             {/* Profile card */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
               <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
                 <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center">
                   <User className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <h2
-                  className="font-bold text-foreground"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
+                <h2 className="font-bold text-foreground heading-display">
                   Profile
                 </h2>
               </div>
@@ -381,30 +372,29 @@ export default async function StudentDashboardPage({
               </div>
             </div>
 
-            {/* Favorites */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            {/* Saved Properties — card grid */}
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
               <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
                 <div className="h-8 w-8 rounded-xl bg-rose/10 flex items-center justify-center">
                   <Heart className="h-4 w-4 text-rose" />
                 </div>
-                <h2
-                  className="font-bold text-foreground"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
+                <h2 className="font-bold text-foreground heading-display">
                   Saved Properties
                 </h2>
               </div>
               <div className="p-4">
                 {favorites && favorites.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-3">
                     {favorites.map((fav) => (
                       <Link
                         key={fav.id}
                         href={`/${campus}/property/${fav.properties?.slug}`}
                         className="flex items-center gap-3 rounded-xl p-3 hover:bg-muted transition-colors group"
                       >
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <Home className="h-4.5 w-4.5 text-primary" />
+                        <div className="relative h-14 w-14 rounded-xl bg-muted overflow-hidden shrink-0">
+                          <div className="flex items-center justify-center h-full">
+                            <Home className="h-5 w-5 text-muted-foreground/40" />
+                          </div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
