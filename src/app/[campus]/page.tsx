@@ -50,9 +50,6 @@ const propertyTypeConfig = [
   { value: "studio", label: "Studio", icon: LayoutGrid },
 ];
 
-// Hero background for campus page
-const campusHeroBg = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&h=600&fit=crop";
-
 export default async function CampusHomePage({
   params,
 }: {
@@ -93,18 +90,14 @@ export default async function CampusHomePage({
   return (
     <div className="flex flex-col pb-16 md:pb-0">
 
-      {/* ── Hero with real photo background ───────────────── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src={campusHeroBg}
-            alt="Campus area"
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
+      {/* ── Hero on the brand night surface ───────────────── */}
+      <section className="relative overflow-hidden bg-night">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-end opacity-[0.06]" aria-hidden="true">
+          <svg width="520" height="520" viewBox="0 0 420 420" fill="none" className="translate-x-24">
+            <path d="M 113 297 A 138 138 0 1 1 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" />
+            <path d="M 113 297 L 210 190 L 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="210" cy="190" r="14" fill="var(--logo-orange)" />
+          </svg>
         </div>
         <div className="relative container mx-auto px-4 lg:px-8 py-16 lg:py-24">
           <div className="max-w-2xl mx-auto text-center">

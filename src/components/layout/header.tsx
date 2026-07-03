@@ -70,9 +70,6 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
             className="flex items-center shrink-0 group gap-2"
           >
             <HaloftLogo size={30} className="transition-transform group-hover:scale-105" />
-            <span className="heading-display font-bold text-lg text-foreground hidden sm:block tracking-tight">
-              Haloft
-            </span>
           </Link>
 
           {/* Centre: pill search bar (campus pages, desktop) */}

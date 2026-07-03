@@ -88,7 +88,7 @@ export default function SignUpPage() {
         <div className="relative space-y-8">
           <div>
             <h2 className="text-4xl font-extrabold leading-tight mb-4 heading-display">
-              Join thousands of students finding great rooms
+              Your room hunt starts here
             </h2>
             <p className="text-white/75 text-lg leading-relaxed">
               Create a free account and start browsing verified accommodation near your campus today.
@@ -99,7 +99,7 @@ export default function SignUpPage() {
             {[
               { icon: Shield, text: "100% free to browse and book" },
               { icon: Star, text: "Real photos, real prices, no surprises" },
-              { icon: Users, text: "Join 500+ students already on Haloft" },
+              { icon: Users, text: "No agents, no agent fees — book directly" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3 text-white/90">
                 <div className="h-8 w-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
@@ -111,17 +111,13 @@ export default function SignUpPage() {
           </div>
         </div>
 
-        {/* Mini testimonial */}
+        {/* Our promise */}
         <div className="relative rounded-2xl bg-white/10 backdrop-blur-sm p-5 border border-white/10">
-          <div className="flex gap-0.5 mb-2">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <Star key={s} className="h-4 w-4 fill-white/80 text-white/80" />
-            ))}
-          </div>
-          <p className="text-white/90 text-sm italic leading-relaxed">
-            &quot;Found my hostel in 20 minutes. No agents, no stress — just great options close to campus.&quot;
+          <p className="text-white/90 text-sm leading-relaxed">
+            Our promise: the room you see online is the room you get. If a
+            listing doesn&apos;t match reality, we make it right.
           </p>
-          <p className="text-white/60 text-xs mt-2">— Adaeze O., FUNAAB student</p>
+          <p className="text-white/60 text-xs mt-2">— The Haloft team</p>
         </div>
 
         <p className="relative text-white/40 text-xs">

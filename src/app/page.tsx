@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,6 @@ import {
   CreditCard,
   Home,
   MapPin,
-  Star,
-  CheckCircle2,
 } from "lucide-react";
 
 // Falls back to the launch campus's real neighbourhoods when the
@@ -27,14 +24,6 @@ const FALLBACK_NEIGHBOURHOODS = [
   { id: null, name: "Famous Market", description: "Affordable rooms with good transport links, near the market." },
   { id: null, name: "Damico", description: "Quiet area, a favourite of final years and postgraduates." },
   { id: null, name: "Osiele", description: "Budget-friendly shared housing with a real community feel." },
-];
-
-// Hero mosaic images — Nigerian student housing vibes
-const heroImages = [
-  { src: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop", alt: "Student accommodation exterior" },
-  { src: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop", alt: "Cozy room interior" },
-  { src: "https://images.unsplash.com/photo-1502672260266-1cbeef0c43f5?w=600&h=400&fit=crop", alt: "Modern apartment building" },
-  { src: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&h=400&fit=crop", alt: "Bright living space" },
 ];
 
 async function getNeighbourhoods() {
@@ -178,27 +167,31 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* Photo mosaic + fact chips */}
+              {/* Brand line art + fact chips */}
               <div className="relative hidden lg:flex items-center justify-center animate-fade-in stagger-2" aria-hidden="true">
-                <div className="grid grid-cols-2 grid-rows-2 gap-3 rounded-2xl overflow-hidden w-full max-w-[420px] aspect-[4/3]">
-                  {heroImages.map((img, i) => (
-                    <div key={i} className="relative overflow-hidden">
-                      <Image
-                        src={img.src}
-                        alt={img.alt}
-                        fill
-                        className="object-cover"
-                        sizes="200px"
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Floating Verified badge */}
-                <div className="absolute top-4 left-4 rounded-full bg-success/90 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg animate-float">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Verified
-                </div>
+                <svg width="420" height="420" viewBox="0 0 420 420" fill="none" className="max-w-full h-auto">
+                  <defs>
+                    <linearGradient id="heroRing" x1="0%" y1="80%" x2="100%" y2="20%">
+                      <stop offset="0%" stopColor="var(--logo-navy)" />
+                      <stop offset="100%" stopColor="var(--logo-teal)" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="210" cy="200" r="185" stroke="var(--logo-navy)" strokeOpacity="0.1" strokeWidth="1.5" strokeDasharray="3 8" />
+                  <path
+                    d="M 113 297 A 138 138 0 1 1 307 297"
+                    stroke="url(#heroRing)"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 113 297 L 210 190 L 307 297"
+                    stroke="url(#heroRing)"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="210" cy="190" r="14" fill="var(--logo-orange)" />
+                </svg>
 
                 {/* Floating facts */}
                 <div className="absolute top-4 right-2 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg shadow-black/5 animate-float">
@@ -265,7 +258,7 @@ export default async function HomePage() {
             </div>
 
             <div className="flex lg:grid lg:grid-cols-5 gap-4 overflow-x-auto lg:overflow-visible scrollbar-hide snap-x pb-2 -mx-4 px-4 lg:mx-0 lg:px-0">
-              {neighbourhoods.slice(0, 5).map((n, i) => (
+              {neighbourhoods.slice(0, 5).map((n) => (
                 <Link
                   key={n.name}
                   href={
@@ -273,30 +266,18 @@ export default async function HomePage() {
                       ? `/${DEFAULT_CAMPUS_SLUG}/search?neighbourhood=${n.id}`
                       : `/${DEFAULT_CAMPUS_SLUG}/search`
                   }
-                  className="group relative rounded-2xl overflow-hidden min-w-[230px] lg:min-w-0 snap-start h-[280px] flex flex-col justify-end no-underline"
+                  className="group relative rounded-2xl border border-border bg-card p-5 min-w-[230px] lg:min-w-0 snap-start transition-all hover:border-teal/50 hover:shadow-lg hover:shadow-black/5 no-underline flex flex-col"
                 >
-                  <div className="absolute inset-0">
-                    <Image
-                      src={heroImages[i % heroImages.length].src}
-                      alt={n.name}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      sizes="230px"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  </div>
-
-                  <div className="relative p-5">
-                    <h3 className="heading-display font-bold text-lg text-white mb-1">
-                      {n.name}
-                    </h3>
-                    <p className="text-[13px] text-white/80 leading-relaxed line-clamp-2 mb-3">
-                      {n.description}
-                    </p>
-                    <span className="inline-flex items-center rounded-full bg-teal/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-white">
-                      Popular
-                    </span>
-                  </div>
+                  <Roofline width={22} stroke="var(--logo-teal)" className="mb-4 opacity-80" />
+                  <h3 className="heading-display font-bold text-lg text-foreground mb-1.5">
+                    {n.name}
+                  </h3>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+                    {n.description}
+                  </p>
+                  <span className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-foreground/70 group-hover:text-teal transition-colors">
+                    See rooms <ArrowUpRight className="h-3.5 w-3.5" />
+                  </span>
                 </Link>
               ))}
             </div>
@@ -353,10 +334,6 @@ export default async function HomePage() {
         <section className="section-py bg-background">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="max-w-xl mb-12">
-              <div className="flex items-center gap-2 mb-3">
-                <Star className="h-4 w-4 fill-amber text-amber" />
-                <p className="text-sm font-semibold text-foreground">Loved by 500+ students</p>
-              </div>
               <div className="flex items-center gap-2.5 mb-4">
                 <Roofline width={26} />
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/60">

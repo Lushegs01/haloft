@@ -98,8 +98,8 @@ export default function SignInPage() {
           <div className="space-y-4">
             {[
               { icon: Shield, text: "Every listing physically verified by our team" },
-              { icon: Star, text: "Real reviews from real students" },
-              { icon: Users, text: "500+ students already housed through Haloft" },
+              { icon: Star, text: "Reviews only from students who completed a stay" },
+              { icon: Users, text: "No agents, no agent fees — book directly" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3 text-white/90">
                 <div className="h-8 w-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
@@ -111,17 +111,13 @@ export default function SignInPage() {
           </div>
         </div>
 
-        {/* Floating testimonial */}
+        {/* Our promise */}
         <div className="relative rounded-2xl bg-white/10 backdrop-blur-sm p-5 border border-white/10">
-          <div className="flex gap-0.5 mb-2">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <Star key={s} className="h-4 w-4 fill-white/80 text-white/80" />
-            ))}
-          </div>
-          <p className="text-white/90 text-sm italic leading-relaxed">
-            &quot;Found my hostel in 20 minutes. No agents, no stress — just great options close to campus.&quot;
+          <p className="text-white/90 text-sm leading-relaxed">
+            Our promise: the room you see online is the room you get. If a
+            listing doesn&apos;t match reality, we make it right.
           </p>
-          <p className="text-white/60 text-xs mt-2">— Adaeze O., FUNAAB student</p>
+          <p className="text-white/60 text-xs mt-2">— The Haloft team</p>
         </div>
 
         <p className="relative text-white/40 text-xs">
