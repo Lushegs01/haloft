@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { CancelBookingButton } from "./cancel-booking-button";
 import { PayNowButton } from "./pay-now-button";
+import { ReviewDialog } from "./review-dialog";
 
 export default async function StudentDashboardPage({
   params,
@@ -100,6 +101,10 @@ export default async function StudentDashboardPage({
       label: "Refunded",
     },
   };
+
+  const reviewedBookingIds = new Set(
+    (reviews ?? []).map((r) => r.booking_id)
+  );
 
   const firstName = profile.full_name?.split(" ")[0] ?? "Student";
   const initial = (profile.full_name?.[0] ?? user.email?.[0] ?? "S").toUpperCase();
@@ -208,6 +213,9 @@ export default async function StudentDashboardPage({
                     {bookings.map((booking) => {
                       const s = statusConfig[booking.status] ?? statusConfig.pending;
                       const isPaid = booking.payments?.some((p) => p.status === "success");
+                      const canReview =
+                        booking.status === "completed" &&
+                        !reviewedBookingIds.has(booking.id);
                       return (
                         <div
                           key={booking.id}
@@ -251,6 +259,13 @@ export default async function StudentDashboardPage({
                               {(booking.status === "pending" ||
                                 (booking.status === "confirmed" && !isPaid)) && (
                                 <CancelBookingButton bookingId={booking.id} campusSlug={campus} />
+                              )}
+                              {canReview && (
+                                <ReviewDialog
+                                  bookingId={booking.id}
+                                  campusSlug={campus}
+                                  propertyTitle={booking.properties?.title ?? "Property"}
+                                />
                               )}
                             </div>
                           </div>

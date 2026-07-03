@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyBookingEvent } from "@/lib/email";
 import type { PaystackChargeData } from "@/lib/paystack";
 
 function channelToMethod(
@@ -53,24 +54,27 @@ export async function recordSuccessfulCharge(
     };
   }
 
-  const { error } = await admin.from("payments").upsert(
-    {
-      booking_id: bookingId,
-      amount: data.amount / 100,
-      currency: "NGN",
-      payment_method: channelToMethod(data.channel),
-      status: "success",
-      transaction_reference: data.reference,
-      paid_at: data.paid_at ?? new Date().toISOString(),
-      metadata: {
-        provider: "paystack",
-        channel: data.channel,
-        gateway_response: data.gateway_response ?? null,
-        customer_email: data.customer?.email ?? null,
+  const { data: inserted, error } = await admin
+    .from("payments")
+    .upsert(
+      {
+        booking_id: bookingId,
+        amount: data.amount / 100,
+        currency: "NGN",
+        payment_method: channelToMethod(data.channel),
+        status: "success",
+        transaction_reference: data.reference,
+        paid_at: data.paid_at ?? new Date().toISOString(),
+        metadata: {
+          provider: "paystack",
+          channel: data.channel,
+          gateway_response: data.gateway_response ?? null,
+          customer_email: data.customer?.email ?? null,
+        },
       },
-    },
-    { onConflict: "transaction_reference", ignoreDuplicates: true }
-  );
+      { onConflict: "transaction_reference", ignoreDuplicates: true }
+    )
+    .select();
 
   if (error) {
     // 23505 = the booking already has a successful payment under a
@@ -82,6 +86,13 @@ export async function recordSuccessfulCharge(
       return { ok: true };
     }
     return { ok: false, reason: error.message };
+  }
+
+  // A non-empty result means this call inserted the row (not an
+  // idempotent duplicate from webhook+callback both firing), so the
+  // "payment received" email is sent exactly once.
+  if (inserted && inserted.length > 0) {
+    await notifyBookingEvent(bookingId, "paid");
   }
 
   return { ok: true };

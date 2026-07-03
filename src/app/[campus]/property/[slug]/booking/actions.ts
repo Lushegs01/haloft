@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyBookingEvent } from "@/lib/email";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const bookingSchema = z.object({
@@ -52,6 +54,12 @@ export async function createBooking(formData: FormData) {
     return { error: "You must be signed in to book a room." };
   }
 
+  // Cap booking attempts to blunt scripted room-locking floods
+  const limit = rateLimit(await clientKey("booking"), 10, 60_000);
+  if (!limit.ok) {
+    return { error: "Too many booking attempts. Please wait a moment and try again." };
+  }
+
   const raw = {
     roomId: formData.get("roomId") as string,
     propertyId: formData.get("propertyId") as string,
@@ -88,6 +96,10 @@ export async function createBooking(formData: FormData) {
     return { error: friendlyBookingError(error) };
   }
 
+  if (booking?.id) {
+    await notifyBookingEvent(booking.id, "received");
+  }
+
   revalidatePath(`/${campusSlug}/dashboard`);
   revalidatePath(`/${campusSlug}/property`);
 
@@ -116,6 +128,8 @@ export async function cancelBooking(bookingId: string, campusSlug: string) {
   if (error) {
     return { error: friendlyBookingError(error) };
   }
+
+  await notifyBookingEvent(bookingId, "cancelled");
 
   revalidatePath(`/${campusSlug}/dashboard`);
 

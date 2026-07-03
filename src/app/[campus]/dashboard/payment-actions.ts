@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { paystackInitialize } from "@/lib/paystack";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
 import { z } from "zod";
 
 /**
@@ -18,6 +19,11 @@ export async function initializePayment(bookingId: string, campusSlug: string) {
 
   if (!user || !user.email) {
     return { error: "You must be signed in to pay for a booking." };
+  }
+
+  const limit = rateLimit(await clientKey("payment"), 15, 60_000);
+  if (!limit.ok) {
+    return { error: "Too many attempts. Please wait a moment and try again." };
   }
 
   if (!z.string().uuid().safeParse(bookingId).success) {

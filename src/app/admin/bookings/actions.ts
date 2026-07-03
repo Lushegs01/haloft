@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyBookingEvent } from "@/lib/email";
 import { z } from "zod";
 
 export type BookingAction = "confirm" | "complete" | "cancel";
@@ -44,6 +45,13 @@ export async function updateBookingStatus(bookingId: string, action: BookingActi
         errorMessages[error.message] ??
         "Could not update the booking. Please try again.",
     };
+  }
+
+  // Notify the student on the two transitions they care about
+  if (action === "confirm") {
+    await notifyBookingEvent(bookingId, "confirmed");
+  } else if (action === "cancel") {
+    await notifyBookingEvent(bookingId, "cancelled");
   }
 
   revalidatePath("/admin/bookings");

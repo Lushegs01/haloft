@@ -113,9 +113,13 @@ export function Footer() {
             © {new Date().getFullYear()} Haloft Technologies Ltd. All rights reserved.
           </p>
           <div className="flex gap-6">
-            {["Privacy", "Terms", "Cookies"].map((l) => (
-              <Link key={l} href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {l}
+            {[
+              { label: "Privacy", href: "/legal/privacy" },
+              { label: "Terms", href: "/legal/terms" },
+              { label: "Refunds", href: "/legal/refunds" },
+            ].map((l) => (
+              <Link key={l.label} href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {l.label}
               </Link>
             ))}
           </div>
