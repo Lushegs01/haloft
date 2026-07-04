@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { paystackInitialize } from "@/lib/paystack";
+import { bookingReference } from "@/lib/payments-logic";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
 import { z } from "zod";
 
@@ -54,7 +55,7 @@ export async function initializePayment(bookingId: string, campusSlug: string) {
     return { error: "Payments are not configured yet. Please contact support." };
   }
 
-  const reference = `HLF-${bookingId.slice(0, 8)}-${Date.now().toString(36)}`.toUpperCase();
+  const reference = bookingReference(bookingId);
 
   try {
     const { authorizationUrl } = await paystackInitialize({

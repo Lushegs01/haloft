@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminUser } from "@/lib/auth/admin";
+import { CACHE_TAGS } from "@/lib/data/campus";
 import { z } from "zod";
 
 const propertySchema = z.object({
@@ -81,6 +82,7 @@ export async function createProperty(formData: FormData) {
   }
 
   revalidatePath("/admin/properties");
+  revalidateTag(CACHE_TAGS.properties, "max");
   redirect("/admin/properties");
 }
 
@@ -141,6 +143,7 @@ export async function updateProperty(propertyId: string, formData: FormData) {
   }
 
   revalidatePath("/admin/properties");
+  revalidateTag(CACHE_TAGS.properties, "max");
   revalidatePath("/admin/properties/" + propertyId);
   return { success: true };
 }
@@ -163,6 +166,7 @@ export async function deleteProperty(propertyId: string) {
   }
 
   revalidatePath("/admin/properties");
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }
 
@@ -206,6 +210,7 @@ export async function duplicateProperty(propertyId: string) {
   }
 
   revalidatePath("/admin/properties");
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }
 
@@ -227,5 +232,6 @@ export async function bulkUpdateStatus(propertyIds: string[], status: "draft" | 
   }
 
   revalidatePath("/admin/properties");
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }

@@ -48,6 +48,7 @@ export default async function SearchPage({
     amenities: queryParams.amenities ? (queryParams.amenities as string).split(",") : undefined,
     search: queryParams.q as string | undefined,
   };
+  const page = Math.max(1, parseInt((queryParams.page as string) ?? "1", 10) || 1);
 
   return (
     <div className="flex flex-col min-h-full pb-16 md:pb-0">
@@ -89,13 +90,15 @@ export default async function SearchPage({
 
           {/* Results */}
           <div className="flex-1 min-w-0">
-            <Suspense fallback={<SearchSkeleton />}>
+            <Suspense key={JSON.stringify({ filters, page })} fallback={<SearchSkeleton />}>
               <SearchResults
                 campusId={campusData.id}
                 campusSlug={campus}
                 campusLat={campusData.latitude}
                 campusLng={campusData.longitude}
                 filters={filters}
+                page={page}
+                queryParams={queryParams}
               />
             </Suspense>
           </div>

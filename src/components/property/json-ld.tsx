@@ -1,7 +1,6 @@
-"use client";
-
-import Script from "next/script";
 import type { PropertyListing } from "@/types/database";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
 
 interface JsonLdProps {
   property: PropertyListing;
@@ -21,7 +20,7 @@ export function PropertyJsonLd({ property, campusSlug }: JsonLdProps) {
       addressRegion: "Ogun",
       addressCountry: "NG",
     },
-    url: `https://haloft.com/${campusSlug}/property/${property.slug}`,
+    url: `${SITE_URL}/${campusSlug}/property/${property.slug}`,
     image: property.media_url ? [property.media_url] : undefined,
     offers: {
       "@type": "Offer",
@@ -41,8 +40,7 @@ export function PropertyJsonLd({ property, campusSlug }: JsonLdProps) {
   };
 
   return (
-    <Script
-      id="property-jsonld"
+    <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
     />

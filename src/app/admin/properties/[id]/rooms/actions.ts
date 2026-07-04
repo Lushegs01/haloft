@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminUser } from "@/lib/auth/admin";
+import { CACHE_TAGS } from "@/lib/data/campus";
 import { z } from "zod";
 
 const roomSchema = z.object({
@@ -66,6 +67,7 @@ export async function createRoom(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath(`/admin/properties/${d.propertyId}`);
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }
 
@@ -101,6 +103,7 @@ export async function updateRoom(roomId: string, formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath(`/admin/properties/${d.propertyId}`);
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }
 
@@ -124,6 +127,7 @@ export async function toggleRoomAvailability(
   if (error) return { error: error.message };
 
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }
 
@@ -140,5 +144,6 @@ export async function deleteRoom(roomId: string, propertyId: string) {
   if (error) return { error: error.message };
 
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidateTag(CACHE_TAGS.properties, "max");
   return { success: true };
 }

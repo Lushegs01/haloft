@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/types/database";
+import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -46,8 +47,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // No auth redirects for now — route guards handle this in pages
-  // Admin routes can be protected separately
+  const path = request.nextUrl.pathname;
+
+  // Defense in depth for /admin: bounce unauthenticated users before the
+  // route renders. Role (admin/super_admin) is still enforced in the admin
+  // layout and by RLS — this only cuts off the anonymous case early.
+  if (path.startsWith("/admin") && !user) {
+    const signInUrl = new URL("/auth/signin", request.url);
+    signInUrl.searchParams.set("next", path);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Signed-in users have no reason to see the auth screens
+  if ((path === "/auth/signin" || path === "/auth/signup") && user) {
+    return NextResponse.redirect(new URL(`/${DEFAULT_CAMPUS_SLUG}`, request.url));
+  }
 
   return supabaseResponse;
 }
@@ -59,13 +73,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public assets
-     * Feel free to modify this pattern to include more paths.
+     * Run on page routes only. Excludes:
+     * - api (routes authenticate themselves; the Paystack webhook must
+     *   not have its request touched by session refresh)
+     * - _next/static, _next/image, favicon.ico, and static asset files
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

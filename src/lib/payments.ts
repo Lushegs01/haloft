@@ -1,14 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyBookingEvent } from "@/lib/email";
+import { channelToMethod, chargeCoversBooking } from "@/lib/payments-logic";
 import type { PaystackChargeData } from "@/lib/paystack";
-
-function channelToMethod(
-  channel: string
-): "card" | "bank_transfer" | "mobile_money" | "cash" {
-  if (channel === "bank" || channel === "bank_transfer") return "bank_transfer";
-  if (channel === "ussd" || channel === "mobile_money") return "mobile_money";
-  return "card";
-}
 
 /**
  * Records a verified successful Paystack charge against its booking.
@@ -46,8 +39,8 @@ export async function recordSuccessfulCharge(
     return { ok: false, reason: `booking ${bookingId} not found` };
   }
 
-  const expectedKobo = Math.round(Number(booking.total_amount) * 100);
-  if (data.currency !== "NGN" || data.amount < expectedKobo) {
+  if (!chargeCoversBooking(data.amount, data.currency, booking.total_amount)) {
+    const expectedKobo = Math.round(Number(booking.total_amount) * 100);
     return {
       ok: false,
       reason: `amount mismatch: charged ${data.amount} ${data.currency}, booking expects ${expectedKobo} NGN`,

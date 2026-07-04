@@ -307,6 +307,8 @@ interface SearchResultsProps {
     amenities?: string[];
     search?: string;
   };
+  page?: number;
+  queryParams?: Record<string, string | string[] | undefined>;
 }
 
 export async function SearchResults({
@@ -315,8 +317,26 @@ export async function SearchResults({
   campusLat,
   campusLng,
   filters,
+  page = 1,
+  queryParams = {},
 }: SearchResultsProps) {
-  const properties = await getCampusProperties(campusId, filters);
+  const { properties, total, pageSize } = await getCampusProperties(
+    campusId,
+    filters,
+    page
+  );
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const pageHref = (p: number) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(queryParams)) {
+      if (k === "page" || v === undefined) continue;
+      params.set(k, Array.isArray(v) ? v.join(",") : v);
+    }
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return `/${campusSlug}/search${qs ? `?${qs}` : ""}`;
+  };
 
   if (properties.length === 0) {
     return (
@@ -342,8 +362,11 @@ export async function SearchResults({
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">{properties.length}</span>{" "}
-          {properties.length === 1 ? "property" : "properties"} found
+          <span className="font-semibold text-foreground">{total}</span>{" "}
+          {total === 1 ? "property" : "properties"} found
+          {totalPages > 1 && (
+            <span className="text-muted-foreground/70"> · page {page} of {totalPages}</span>
+          )}
         </p>
         <div className="flex items-center gap-3">
           <button className="hidden sm:inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 transition-all">
@@ -447,6 +470,44 @@ export async function SearchResults({
           );
         })}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav
+          className="flex items-center justify-center gap-2 pt-4"
+          aria-label="Search results pages"
+        >
+          {page > 1 ? (
+            <Link
+              href={pageHref(page - 1)}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 transition-colors no-underline"
+              rel="prev"
+            >
+              Previous
+            </Link>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-4 py-2 text-sm font-medium text-muted-foreground/50 cursor-not-allowed">
+              Previous
+            </span>
+          )}
+          <span className="px-3 text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+          {page < totalPages ? (
+            <Link
+              href={pageHref(page + 1)}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 transition-colors no-underline"
+              rel="next"
+            >
+              Next
+            </Link>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-4 py-2 text-sm font-medium text-muted-foreground/50 cursor-not-allowed">
+              Next
+            </span>
+          )}
+        </nav>
+      )}
     </div>
   );
 }

@@ -275,6 +275,8 @@ export type Database = {
           featured_order: number | null;
           meta_title: string | null;
           meta_description: string | null;
+          avg_rating: number | null;
+          review_count: number;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -305,6 +307,8 @@ export type Database = {
           featured_order?: number | null;
           meta_title?: string | null;
           meta_description?: string | null;
+          avg_rating?: number | null;
+          review_count?: number;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -335,6 +339,8 @@ export type Database = {
           featured_order?: number | null;
           meta_title?: string | null;
           meta_description?: string | null;
+          avg_rating?: number | null;
+          review_count?: number;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
