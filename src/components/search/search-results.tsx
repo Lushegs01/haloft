@@ -408,11 +408,11 @@ export async function SearchResults({
             <Link
               key={property.id}
               href={`/${campusSlug}/property/${property.slug}`}
-              className="group cursor-pointer animate-fade-in"
+              className="group animate-fade-in"
               style={{ animationDelay: `${(index % 4) * 0.05}s` }}
             >
               {/* Image container */}
-              <div className="relative overflow-hidden rounded-2xl property-card-img mb-3">
+              <div className="property-card-img relative mb-3 overflow-hidden rounded-3xl ring-1 ring-border transition-shadow duration-300 group-hover:shadow-premium">
                 {property.media_url ? (
                   <Image
                     src={property.media_url}
@@ -422,48 +422,56 @@ export async function SearchResults({
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-muted">
+                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
                     <Building2 className="h-10 w-10 text-muted-foreground/30" />
                   </div>
                 )}
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                 {/* Save/heart button */}
                 <button
-                  className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
                   onClick={(e) => e.preventDefault()}
+                  aria-label="Save property"
                 >
-                  <Heart className="h-4 w-4 text-foreground/80" />
+                  <Heart className="h-4 w-4 text-foreground/80 transition-colors hover:text-primary" />
                 </button>
                 {/* Verified badge */}
-                <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-success/90 backdrop-blur-sm px-2 py-1 text-[11px] font-semibold text-white">
-                  <CheckCircle2 className="h-3 w-3" />
+                <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-night/85 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                  <CheckCircle2 className="h-3 w-3 text-teal" />
                   Verified
                 </span>
                 {/* Walk time */}
                 {minutes !== null && (
-                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/50 backdrop-blur-sm px-2 py-1 text-[11px] font-semibold text-white">
+                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                    <MapPin className="h-3 w-3" />
                     ≈ {minutes} min walk
                   </span>
                 )}
+                {/* Price pill */}
+                <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-[13px] font-extrabold text-foreground shadow-sm backdrop-blur-sm">
+                  ₦{minPrice.toLocaleString()}
+                  <span className="text-[10px] font-semibold text-muted-foreground"> /mo</span>
+                </span>
               </div>
 
               {/* Card info below image */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-foreground text-sm truncate pr-2">{title}</h3>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
-                    <span className="text-sm font-medium">{rating}</span>
+              <div className="space-y-1 px-0.5">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                    {title}
+                  </h3>
+                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                    <Star className="h-3 w-3 fill-amber text-amber" />
+                    <span className="text-xs font-semibold">{rating}</span>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground truncate">{address}</p>
+                <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {address}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {availableRooms} {availableRooms === 1 ? "room" : "rooms"} · {propertyType}
-                </p>
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">₦{minPrice.toLocaleString()}</span>
-                  <span className="text-muted-foreground"> /month</span>
                 </p>
               </div>
             </Link>

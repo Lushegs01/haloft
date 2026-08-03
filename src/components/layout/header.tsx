@@ -12,8 +12,7 @@ import {
   X,
   Home,
   LogIn,
-  ChevronDown,
-  Globe,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -56,18 +55,18 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           scrolled
             ? "glass shadow-sm shadow-black/5"
-            : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            : "bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50"
         }`}
       >
         <div
-          className={`container mx-auto flex items-center justify-between px-4 lg:px-8 gap-4 transition-all duration-300 ${
+          className={`container mx-auto flex items-center justify-between gap-4 px-4 transition-all duration-300 lg:px-8 ${
             scrolled ? "h-16" : "h-20"
           }`}
         >
           {/* Logo with wordmark */}
           <Link
             href={campusSlug ? `/${campusSlug}` : "/"}
-            className="flex items-center shrink-0 group gap-2"
+            className="group flex shrink-0 items-center gap-2"
           >
             <HaloftLogo size={30} className="transition-transform group-hover:scale-105" />
           </Link>
@@ -76,22 +75,23 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
           {campusSlug && (
             <Link
               href={`/${campusSlug}/search`}
-              className="hidden md:flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground shadow-sm hover:shadow-lg hover:border-primary/50 transition-all flex-1 max-w-xs mx-auto group"
+              className="group mx-auto hidden max-w-xs flex-1 items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground shadow-sm transition-all hover:border-primary/50 hover:shadow-premium md:flex"
             >
-              <Search className="h-4 w-4 shrink-0 group-hover:text-primary transition-colors" />
-              <span>Search rooms near {campusName ?? "campus"}</span>
-              <span className="ml-auto bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+              <Search className="h-4 w-4 shrink-0 transition-colors group-hover:text-primary" />
+              <span className="truncate">Search rooms near {campusName ?? "campus"}</span>
+              <span className="ml-auto shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 Search
               </span>
             </Link>
           )}
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             {/* Become a host — shown only on landing */}
             {!campusSlug && (
               <Link href="/auth/signin" className="hidden md:block">
-                <Button variant="ghost" size="sm" className="text-sm font-medium">
+                <Button variant="ghost" size="sm" className="gap-1.5 rounded-full text-sm font-medium">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
                   List your property
                 </Button>
               </Link>
@@ -116,10 +116,10 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                         e.stopPropagation();
                         setUserMenuOpen(!userMenuOpen);
                       }}
-                      className="flex items-center gap-2 rounded-full border-2 border-transparent bg-card px-2 py-1.5 text-sm font-medium hover:border-primary/30 hover:shadow-md transition-all"
+                      className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 text-sm font-medium transition-all hover:border-primary/40 hover:shadow-md"
                     >
-                      <Menu className="h-4 w-4 text-muted-foreground hidden sm:block" />
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold border-2 border-transparent">
+                      <Menu className="hidden h-4 w-4 text-muted-foreground sm:block" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
                         {initial}
                       </div>
                     </button>
@@ -131,18 +131,18 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -8, scale: 0.95 }}
                           transition={{ duration: 0.15, ease: "easeOut" }}
-                          className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-border bg-popover shadow-xl shadow-black/10 overflow-hidden"
+                          className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl shadow-black/10"
                         >
-                          <div className="px-4 py-3 border-b border-border">
-                            <p className="font-semibold text-sm text-foreground">{user.email?.split("@")[0]}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          <div className="border-b border-border px-4 py-3">
+                            <p className="text-sm font-semibold text-foreground">{user.email?.split("@")[0]}</p>
+                            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                           </div>
                           <div className="p-1.5">
                             {campusSlug && (
                               <>
                                 <Link
                                   href={`/${campusSlug}/dashboard`}
-                                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
                                   onClick={() => setUserMenuOpen(false)}
                                 >
                                   <Home className="h-4 w-4 text-muted-foreground" />
@@ -150,7 +150,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                                 </Link>
                                 <Link
                                   href={`/${campusSlug}/dashboard`}
-                                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
                                   onClick={() => setUserMenuOpen(false)}
                                 >
                                   <Heart className="h-4 w-4 text-muted-foreground" />
@@ -162,7 +162,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                             <form action="/auth/signout" method="post">
                               <button
                                 type="submit"
-                                className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors"
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/5"
                               >
                                 <LogIn className="h-4 w-4 rotate-180" />
                                 Sign Out
@@ -174,14 +174,14 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                     </AnimatePresence>
                   </div>
                 ) : (
-                  <div className="hidden md:flex items-center gap-2">
+                  <div className="hidden items-center gap-2 md:flex">
                     <Link href="/auth/signin">
-                      <Button variant="ghost" size="sm" className="font-medium">
+                      <Button variant="ghost" size="sm" className="rounded-full font-medium">
                         Sign in
                       </Button>
                     </Link>
                     <Link href="/auth/signup">
-                      <Button size="sm" className="font-semibold shadow-sm shadow-primary/20 rounded-full px-5">
+                      <Button size="sm" className="rounded-full px-5 font-semibold shadow-sm shadow-primary/20">
                         Sign up
                       </Button>
                     </Link>
@@ -192,7 +192,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
 
             {/* Mobile menu toggle */}
             <button
-              className="md:hidden flex items-center justify-center h-9 w-9 rounded-full border border-border bg-card hover:bg-muted transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card transition-colors hover:bg-muted md:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -203,13 +203,13 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-border bg-background/98 backdrop-blur animate-slide-up">
-            <div className="container mx-auto px-4 py-4 space-y-1">
+          <div className="animate-slide-up border-t border-border bg-background/98 backdrop-blur md:hidden">
+            <div className="container mx-auto space-y-1 px-4 py-4">
               {campusSlug && (
                 <>
                   <Link
                     href={`/${campusSlug}`}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                     onClick={() => setMobileOpen(false)}
                   >
                     <Home className="h-4 w-4 text-muted-foreground" />
@@ -217,7 +217,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                   </Link>
                   <Link
                     href={`/${campusSlug}/search`}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                     onClick={() => setMobileOpen(false)}
                   >
                     <Search className="h-4 w-4 text-muted-foreground" />
@@ -225,13 +225,13 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                   </Link>
                 </>
               )}
-              <div className="pt-2 border-t border-border">
+              <div className="border-t border-border pt-2">
                 {user ? (
                   <>
                     {campusSlug && (
                       <Link
                         href={`/${campusSlug}/dashboard`}
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                         onClick={() => setMobileOpen(false)}
                       >
                         <User className="h-4 w-4 text-muted-foreground" />
@@ -241,7 +241,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                     <form action="/auth/signout" method="post">
                       <button
                         type="submit"
-                        className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
                       >
                         <LogIn className="h-4 w-4 rotate-180" />
                         Sign Out
@@ -266,13 +266,13 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
 
       {/* Mobile bottom nav (campus pages only) */}
       {campusSlug && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border safe-area-pb">
-          <div className="flex items-center justify-around h-16 px-2">
+        <nav className="glass safe-area-pb fixed bottom-0 left-0 right-0 z-40 border-t border-border md:hidden">
+          <div className="flex h-16 items-center justify-around px-2">
             <Link
               href={`/${campusSlug}`}
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-muted transition-colors group"
+              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
             >
-              <Home className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}`) && !isActive(`/${campusSlug}/search`) && !isActive(`/${campusSlug}/dashboard`) ? "text-primary fill-current" : "text-muted-foreground group-hover:text-primary"}`} />
+              <Home className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}`) && !isActive(`/${campusSlug}/search`) && !isActive(`/${campusSlug}/dashboard`) ? "fill-current text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
               <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}`) && !isActive(`/${campusSlug}/search`) && !isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
                 Home
               </span>
@@ -282,7 +282,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
             </Link>
             <Link
               href={`/${campusSlug}/search`}
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-muted transition-colors group relative"
+              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
             >
               <Search className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/search`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
               <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}/search`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
@@ -294,9 +294,9 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
             </Link>
             <Link
               href={user ? `/${campusSlug}/dashboard` : "/auth/signin"}
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-muted transition-colors group relative"
+              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
             >
-              <Heart className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary fill-current" : "text-muted-foreground group-hover:text-primary"}`} />
+              <Heart className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "fill-current text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
               <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
                 Saved
               </span>
@@ -306,7 +306,7 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
             </Link>
             <Link
               href={user ? `/${campusSlug}/dashboard` : "/auth/signin"}
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-muted transition-colors group relative"
+              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
             >
               <User className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
               <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>

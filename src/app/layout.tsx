@@ -20,40 +20,42 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: {
-    default: "Haloft — Trusted Student Accommodation",
+    default: "Haloft — Find Trusted Student Accommodation Near Your University",
     template: "%s | Haloft",
   },
   description:
-    "Haloft is the trusted accommodation marketplace for university students. Verified listings, transparent pricing, and a seamless booking experience.",
+    "Haloft is the trusted accommodation marketplace for Nigerian university students. Verified listings, transparent pricing, walk-times to campus, and secure payments through Paystack.",
   keywords: [
     "student housing",
     "university accommodation",
     "student rooms",
     "campus housing",
     "student rentals",
+    "hostels in Nigeria",
+    "self contained near campus",
     "Haloft",
   ],
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "Haloft",
-    title: "Haloft — Trusted Student Accommodation",
+    title: "Haloft — Find Trusted Student Accommodation Near Your University",
     description:
-      "Haloft is the trusted accommodation marketplace for university students. Verified listings, transparent pricing, and a seamless booking experience.",
+      "Haloft is the trusted accommodation marketplace for Nigerian university students. Verified listings, transparent pricing, walk-times to campus, and secure payments through Paystack.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Haloft — Trusted Student Accommodation",
+        alt: "Haloft — Find Trusted Student Accommodation Near Your University",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Haloft — Trusted Student Accommodation",
+    title: "Haloft — Find Trusted Student Accommodation Near Your University",
     description:
-      "Haloft is the trusted accommodation marketplace for university students. Verified listings, transparent pricing, and a seamless booking experience.",
+      "Haloft is the trusted accommodation marketplace for Nigerian university students. Verified listings, transparent pricing, and secure payments.",
     images: ["/og-image.jpg"],
   },
   robots: {

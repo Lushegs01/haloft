@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Roofline } from "@/components/ui/roofline";
 import {
   Search,
   MapPin,
@@ -92,6 +93,9 @@ export default async function CampusHomePage({
 
       {/* ── Hero on the brand night surface ───────────────── */}
       <section className="relative overflow-hidden bg-night">
+        <div className="absolute inset-0 bg-dots-light opacity-40 [mask-image:radial-gradient(ellipse_70%_70%_at_50%_0%,black,transparent)]" aria-hidden="true" />
+        <div className="orb h-[420px] w-[420px] -left-40 -top-40 bg-teal/20" style={{ animation: "floaty 15s ease-in-out infinite" }} aria-hidden="true" />
+        <div className="orb h-[440px] w-[440px] -right-44 -top-24 bg-primary/15" style={{ animation: "floaty 17s ease-in-out infinite reverse" }} aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-end opacity-[0.06]" aria-hidden="true">
           <svg width="520" height="520" viewBox="0 0 420 420" fill="none" className="translate-x-24">
             <path d="M 113 297 A 138 138 0 1 1 307 297" stroke="#e8f0fb" strokeWidth="10" strokeLinecap="round" />
@@ -99,31 +103,31 @@ export default async function CampusHomePage({
             <circle cx="210" cy="190" r="14" fill="var(--logo-orange)" />
           </svg>
         </div>
-        <div className="relative container mx-auto px-4 lg:px-8 py-16 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center">
-            <p className="text-white/70 font-medium text-sm mb-3 animate-fade-in">
+        <div className="relative container mx-auto px-4 py-16 lg:px-8 lg:py-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/75 backdrop-blur-sm animate-fade-in">
               {campusData.name} · {campusData.universities.name}
             </p>
-            <h1 className="heading-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 animate-slide-up">
+            <h1 className="heading-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-6xl animate-slide-up">
               Find accommodation near{" "}
-              <span className="text-primary">{campusData.universities.name}</span>
+              <span className="gradient-text">{campusData.universities.name}</span>
             </h1>
-            <p className="text-white/70 text-lg mb-8 animate-slide-up stagger-1">
+            <p className="mb-8 mt-5 text-lg text-white/70 animate-slide-up stagger-1">
               {featuredProperties?.length ?? 0}+ verified properties — real photos, honest prices.
             </p>
 
             {/* Search bar — white rounded-2xl with shadow-xl */}
             <form action={`/${campus}/search`} className="animate-slide-up stagger-2">
-              <div className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white shadow-xl p-2 max-w-xl mx-auto">
-                <div className="flex-1 flex items-center gap-3 px-3">
-                  <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+              <div className="mx-auto flex max-w-xl items-center gap-2 rounded-2xl border border-white/20 bg-white p-2 shadow-2xl">
+                <div className="flex flex-1 items-center gap-3 px-3">
+                  <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
                   <input
                     name="q"
                     placeholder="Search by name, area, or amenity..."
-                    className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-2"
+                    className="flex-1 bg-transparent py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none"
                   />
                 </div>
-                <Button type="submit" className="rounded-xl h-10 px-5 font-semibold shrink-0">
+                <Button type="submit" className="h-10 shrink-0 rounded-xl px-5 font-semibold shadow-lg shadow-primary/25">
                   Search
                 </Button>
               </div>
@@ -160,17 +164,15 @@ export default async function CampusHomePage({
       {/* ── Featured Properties ───────────────────────────── */}
       <section className="section-py bg-background">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-end justify-between mb-8">
+          <div className="mb-8 flex items-end justify-between">
             <div>
-              <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-1">
-                Featured
-              </p>
-              <h2 className="heading-display text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
+              <span className="eyebrow">Featured</span>
+              <h2 className="heading-display mt-4 text-2xl font-extrabold text-foreground lg:text-3xl">
                 Top-rated properties
               </h2>
             </div>
             <Link href={`/${campus}/search`}>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-primary hover:text-primary font-medium">
+              <Button variant="ghost" size="sm" className="gap-1.5 font-medium text-primary hover:text-primary">
                 View all
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -178,15 +180,15 @@ export default async function CampusHomePage({
           </div>
 
           {featuredProperties && featuredProperties.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featuredProperties.map((property) => (
                 <Link
                   key={property.id}
                   href={`/${campus}/property/${property.slug}`}
-                  className="group cursor-pointer"
+                  className="group"
                 >
                   {/* Image */}
-                  <div className="relative property-card-img overflow-hidden rounded-2xl mb-3">
+                  <div className="property-card-img relative mb-3 overflow-hidden rounded-3xl ring-1 ring-border transition-shadow duration-300 group-hover:shadow-premium">
                     {property.media_url ? (
                       <Image
                         src={property.media_url}
@@ -196,7 +198,7 @@ export default async function CampusHomePage({
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : (
-                      <div className="flex items-center justify-center h-full bg-muted">
+                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
                         <Building2 className="h-12 w-12 text-muted-foreground/30" />
                       </div>
                     )}
@@ -206,41 +208,38 @@ export default async function CampusHomePage({
 
                     {/* Heart/save */}
                     <button
-                      className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
                       onClick={(e) => e.preventDefault()}
+                      aria-label="Save property"
                     >
                       <Heart className="h-4 w-4 text-foreground/80" />
                     </button>
 
                     {/* Verified badge */}
-                    <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-success/90 backdrop-blur-sm px-2 py-1 text-[11px] font-semibold text-white">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Verified
-                      </span>
-                    </div>
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-night/85 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                      <CheckCircle2 className="h-3 w-3 text-teal" />
+                      Verified
+                    </span>
 
                     {/* Price overlay */}
-                    <div className="absolute bottom-3 right-3">
-                      <div className="rounded-xl bg-black/60 backdrop-blur-sm px-3 py-1.5 text-right">
-                        <p className="text-white font-bold text-sm">₦{property.min_price?.toLocaleString() ?? "N/A"}</p>
-                        <p className="text-white/70 text-[10px]">/month</p>
-                      </div>
-                    </div>
+                    <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-[13px] font-extrabold text-foreground shadow-sm backdrop-blur-sm">
+                      ₦{property.min_price?.toLocaleString() ?? "N/A"}
+                      <span className="text-[10px] font-semibold text-muted-foreground"> /mo</span>
+                    </span>
                   </div>
 
                   {/* Info */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-semibold text-foreground text-sm truncate pr-2 group-hover:text-primary transition-colors">
+                  <div className="space-y-1 px-0.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary">
                         {property.title}
                       </h3>
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
-                        <span className="text-sm font-medium">{property.avg_rating ?? "New"}</span>
+                      <div className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                        <Star className="h-3 w-3 fill-amber text-amber" />
+                        <span className="text-xs font-semibold">{property.avg_rating ?? "New"}</span>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
+                    <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
                       <MapPin className="h-3 w-3 shrink-0" />
                       {property.neighbourhood_name ?? property.address}
                     </p>
@@ -284,33 +283,36 @@ export default async function CampusHomePage({
         <section className="section-py bg-muted/30">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="mb-8">
-              <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-1">
-                Explore areas
-              </p>
-              <h2 className="heading-display text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
+              <span className="eyebrow">Explore areas</span>
+              <h2 className="heading-display mt-4 text-2xl font-extrabold text-foreground lg:text-3xl">
                 Popular neighbourhoods
               </h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {neighbourhoods.map((area) => (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {neighbourhoods.map((area, i) => (
                 <Link
                   key={area.id}
                   href={`/${campus}/search?neighbourhood=${area.id}`}
-                  className="group relative rounded-2xl overflow-hidden h-[200px] flex flex-col justify-end no-underline"
- >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                  <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-                  <div className="relative p-5">
-                    <h3 className="font-bold text-white text-sm mb-1">
-                      {area.name}
-                    </h3>
+                  className="group relative flex h-[200px] flex-col justify-between overflow-hidden rounded-3xl bg-night p-6 no-underline"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal/30 via-night to-night" aria-hidden="true" />
+                  <div className="absolute inset-0 bg-dots-light opacity-40" aria-hidden="true" />
+                  <div className="orb h-40 w-40 -right-14 -top-14 bg-primary/25 transition-transform duration-500 group-hover:scale-125" aria-hidden="true" />
+
+                  <div className="relative flex items-start justify-between">
+                    <Roofline width={22} stroke="#4ecab8" dot="var(--logo-orange)" className="opacity-90" />
+                    <span className="font-display text-5xl font-extrabold tracking-tight text-white/10">0{i + 1}</span>
+                  </div>
+
+                  <div className="relative">
+                    <h3 className="font-display text-lg font-extrabold text-white">{area.name}</h3>
                     {area.description && (
-                      <p className="text-xs text-white/70 line-clamp-2 leading-relaxed">
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/70">
                         {area.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-1 mt-2 text-white/80 group-hover:text-white transition-colors text-xs font-medium">
-                      Browse <ArrowRight className="h-3 w-3" />
+                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-white/80 transition-colors group-hover:text-teal">
+                      Browse <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
                 </Link>
