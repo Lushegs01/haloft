@@ -42,18 +42,22 @@ export default async function BookingPage({
     notFound();
   }
 
+  // Fetch the room without filtering on availability. Submitting a booking
+  // flips the room to 'reserved', and the server action revalidates this
+  // route — filtering here would 404 the student the instant their booking
+  // succeeds. Availability is enforced authoritatively by create_booking().
   const { data: room } = await supabase
     .from("room_listings")
     .select("*")
     .eq("id", roomId)
     .eq("property_id", property.id)
-    .eq("status", "available")
-    .eq("is_available", true)
     .single();
 
   if (!room) {
     notFound();
   }
+
+  const isBookable = room.is_available === true && room.status === "available";
 
   return (
     <BookingForm
@@ -61,6 +65,7 @@ export default async function BookingPage({
       propertySlug={slug}
       campusSlug={campus}
       propertyTitle={property.title}
+      isBookable={isBookable}
     />
   );
 }

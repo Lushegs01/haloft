@@ -16,9 +16,17 @@ interface BookingFormProps {
   propertySlug: string;
   campusSlug: string;
   propertyTitle: string;
+  /** False when the room is already reserved, occupied, or under maintenance */
+  isBookable?: boolean;
 }
 
-export function BookingForm({ room, propertySlug, campusSlug, propertyTitle }: BookingFormProps) {
+export function BookingForm({
+  room,
+  propertySlug,
+  campusSlug,
+  propertyTitle,
+  isBookable = true,
+}: BookingFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
@@ -36,12 +44,41 @@ export function BookingForm({ room, propertySlug, campusSlug, propertyTitle }: B
 
     if (result.error) {
       toast.error(result.error);
-    } else {
-      setSuccess(true);
-      toast.success("Booking submitted successfully!");
+      setLoading(false);
+      return;
     }
 
-    setLoading(false);
+    // Show the confirmation, then move the student to their dashboard.
+    // Staying here is not an option: the booking reserved this room, so a
+    // re-render of this route would no longer find it as bookable.
+    setSuccess(true);
+    toast.success("Booking submitted successfully!");
+    router.push(`/${campusSlug}/dashboard`);
+  }
+
+  if (!isBookable && !success) {
+    return (
+      <div className="container mx-auto px-4 lg:px-8 py-12 max-w-lg">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">This room is taken</h2>
+            <p className="text-muted-foreground mb-6">
+              {room.name} at {propertyTitle} is no longer available. Other rooms
+              at this property may still be open.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button onClick={() => router.push(`/${campusSlug}/property/${propertySlug}`)}>
+                See other rooms here
+              </Button>
+              <Button variant="outline" onClick={() => router.push(`/${campusSlug}/search`)}>
+                Browse all listings
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (success) {
