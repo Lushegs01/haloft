@@ -17,12 +17,27 @@ export function isSupabaseConfigured(): boolean {
   );
 }
 
+/** Names the vars that were actually absent, so a typo in one is
+ *  distinguishable from neither being set. */
+export function missingSupabaseVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  }
+  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  return missing;
+}
+
 /** Developer-facing detail — logged, never shown to visitors. */
 export const SUPABASE_CONFIG_HINT =
-  "Supabase is not configured: NEXT_PUBLIC_SUPABASE_URL and " +
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY are missing from this build. Set them in " +
-  "your hosting environment variables, then redeploy — NEXT_PUBLIC_* values " +
-  "are baked in at build time, so saving them alone will not fix it.";
+  `Supabase is not configured. Missing from this build: ${
+    missingSupabaseVars().join(", ") || "none"
+  }. Set the missing var(s) in your hosting environment variables for the ` +
+  "Production environment, then trigger a redeploy — NEXT_PUBLIC_* values " +
+  "are inlined at build time, so saving them without rebuilding will not " +
+  "take effect.";
 
 /** What a visitor sees when the backend is unreachable. */
 export const SERVICE_UNAVAILABLE_MESSAGE =
