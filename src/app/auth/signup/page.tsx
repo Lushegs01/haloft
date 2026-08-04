@@ -5,7 +5,12 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  SERVICE_UNAVAILABLE_MESSAGE,
+  SUPABASE_CONFIG_HINT,
+  describeAuthError,
+} from "@/lib/supabase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,25 +39,41 @@ export default function SignUpPage() {
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, phone },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      toast.error(error.message);
-    } else if (data.user) {
-      toast.success("Account created! Check your email to confirm.");
-      router.push("/auth/signin");
+    // Without the public Supabase vars every request goes to a dead local
+    // address and fails as "Failed to fetch". Say so up front rather than
+    // spinning and then showing the visitor a browser-level network error.
+    if (!isSupabaseConfigured()) {
+      console.error(SUPABASE_CONFIG_HINT);
+      toast.error(SERVICE_UNAVAILABLE_MESSAGE);
+      return;
     }
 
-    setLoading(false);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName, phone },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error(describeAuthError(error));
+      } else if (data.user) {
+        toast.success("Account created! Check your email to confirm.");
+        router.push("/auth/signin");
+      }
+    } catch (err) {
+      // supabase-js throws instead of returning when fetch itself rejects.
+      console.error(err);
+      toast.error(SERVICE_UNAVAILABLE_MESSAGE);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const passwordStrength =
