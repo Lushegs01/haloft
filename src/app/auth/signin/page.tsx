@@ -5,7 +5,12 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  SERVICE_UNAVAILABLE_MESSAGE,
+  SUPABASE_CONFIG_HINT,
+  describeAuthError,
+} from "@/lib/supabase/config";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,21 +27,37 @@ export default function SignInPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  /** Guards both handlers: unconfigured builds can only fail as a raw
+   *  network error, so stop before the request and explain instead. */
+  function backendUnreachable() {
+    if (isSupabaseConfigured()) return false;
+    console.error(SUPABASE_CONFIG_HINT);
+    toast.error(SERVICE_UNAVAILABLE_MESSAGE);
+    return true;
+  }
+
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
+    if (backendUnreachable()) return;
+
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Welcome back!");
-      router.push(`/${DEFAULT_CAMPUS_SLUG}`);
-      router.refresh();
+      if (error) {
+        toast.error(describeAuthError(error));
+      } else {
+        toast.success("Welcome back!");
+        router.push(`/${DEFAULT_CAMPUS_SLUG}`);
+        router.refresh();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(SERVICE_UNAVAILABLE_MESSAGE);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function handleMagicLink() {
@@ -44,20 +65,27 @@ export default function SignInPage() {
       toast.error("Please enter your email first.");
       return;
     }
+    if (backendUnreachable()) return;
+
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Magic link sent! Check your email.");
+      if (error) {
+        toast.error(describeAuthError(error));
+      } else {
+        toast.success("Magic link sent! Check your email.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(SERVICE_UNAVAILABLE_MESSAGE);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (

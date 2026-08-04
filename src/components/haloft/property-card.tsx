@@ -28,14 +28,21 @@ export function formatNaira(amount: number): string {
 }
 
 export function PropertyCard({ listing }: { listing: ListingCard }) {
-  const href = `/${listing.campusSlug}/property/${listing.slug}`;
   const typeLabel = PROPERTY_TYPE_LABELS[listing.propertyType] ?? "Property";
 
-  return (
-    <Link
-      href={href}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-premium"
-    >
+  // Sample cards are placeholders shown when the catalogue is empty — there
+  // is no property behind them, so linking to /campus/property/<slug> only
+  // leads to a dead page. Render them as plain, non-clickable cards.
+  const isSample = listing.source === "sample";
+
+  const cardClass =
+    "group flex flex-col overflow-hidden rounded-2xl border border-border bg-white" +
+    (isSample
+      ? ""
+      : " transition-all duration-300 hover:-translate-y-1 hover:shadow-premium");
+
+  const body = (
+    <>
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         {listing.imageUrl ? (
           <Image
@@ -116,12 +123,31 @@ export function PropertyCard({ listing }: { listing: ListingCard }) {
             {formatNaira(listing.pricePerMonth)}
             <span className="text-xs font-medium text-muted-foreground">/month</span>
           </p>
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-ink">
-            <DollarSign className="size-3.5" aria-hidden="true" />
-            View home
-          </span>
+          {isSample ? (
+            <span className="text-xs font-medium text-muted-foreground">
+              Example pricing
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-ink">
+              <DollarSign className="size-3.5" aria-hidden="true" />
+              View home
+            </span>
+          )}
         </div>
       </div>
+    </>
+  );
+
+  if (isSample) {
+    return <div className={cardClass}>{body}</div>;
+  }
+
+  return (
+    <Link
+      href={`/${listing.campusSlug}/property/${listing.slug}`}
+      className={cardClass}
+    >
+      {body}
     </Link>
   );
 }

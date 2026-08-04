@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
+import { SUPABASE_CONFIG_HINT } from "./config";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -10,9 +11,11 @@ export async function createClient() {
 
   if (!url || !key) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "Supabase configuration missing: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
-      );
+      // Deliberately fatal: any page reaching here would otherwise render
+      // as "not found" or empty, hiding a deploy-config bug behind
+      // plausible-looking output. The message lands in the hosting logs
+      // next to the error reference shown to the visitor.
+      throw new Error(SUPABASE_CONFIG_HINT);
     }
     // Local dev without .env.local: dummy client so pages render
     // (with empty data) instead of crashing. Copy .env.example to
