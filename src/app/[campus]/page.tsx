@@ -206,14 +206,17 @@ export default async function CampusHomePage({
                     {/* Gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-                    {/* Heart/save */}
-                    <button
-                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
-                      onClick={(e) => e.preventDefault()}
-                      aria-label="Save property"
+                    {/* Decorative heart — favourites not yet wired up.
+                        Must NOT carry an onClick: this renders inside a
+                        Server Component, where event handlers throw
+                        "Event handlers cannot be passed to Client Component
+                        props" at render time. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 shadow-sm backdrop-blur-sm"
                     >
                       <Heart className="h-4 w-4 text-foreground/80" />
-                    </button>
+                    </span>
 
                     {/* Verified badge */}
                     <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-night/85 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
