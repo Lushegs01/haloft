@@ -178,6 +178,13 @@ Other decisions that hold the line:
   anon key. **New views need `WITH (security_invoker = on)`** unless they
   exist specifically to cross an RLS boundary — `public_profiles` is the
   one that does, and the migration explains why it must stay a definer.
+- Run `012_media_visibility.sql`: `media` is polymorphic and its read
+  policy was `deleted_at IS NULL` and nothing else, so photos of
+  unpublished properties — and of admin-only inspections — were public.
+  The policy now follows the entity each row hangs off, and the
+  `property-media` bucket no longer lets anyone enumerate it. The bucket
+  stays public: URLs still work for whoever holds one, they are just no
+  longer discoverable.
 
 ### Imagery
 
