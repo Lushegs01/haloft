@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
@@ -113,7 +112,6 @@ export function PropertyDetailPage({
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const reduced = useReducedMotion();
 
   const avgRating = property.avg_rating ?? 0;
   const reviewCount = property.review_count ?? 0;
@@ -639,14 +637,9 @@ export function PropertyDetailPage({
       </div>
 
       {/* ── Lightbox ─────────────────────────────────────── */}
-      <AnimatePresence>
-        {lightboxOpen && media.length > 0 && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex flex-col bg-[rgba(10,15,20,0.97)]"
-            initial={reduced ? undefined : { opacity: 0 }}
-            animate={reduced ? undefined : { opacity: 1 }}
-            exit={reduced ? undefined : { opacity: 0 }}
-            transition={{ duration: 0.2 }}
+      {lightboxOpen && media.length > 0 && (
+          <div
+            className="fade-in fixed inset-0 z-[100] flex flex-col bg-[rgba(10,15,20,0.97)]"
             role="dialog"
             aria-modal="true"
             aria-label={`${title} photos`}
@@ -719,9 +712,8 @@ export function PropertyDetailPage({
                 ))}
               </div>
             )}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }

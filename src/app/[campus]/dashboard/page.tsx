@@ -14,6 +14,11 @@ import { formatNaira } from "@/components/haloft/format";
 import { CancelBookingButton } from "./cancel-booking-button";
 import { PayNowButton } from "./pay-now-button";
 import { ReviewDialog } from "./review-dialog";
+import { AppToaster } from "@/components/ui/app-toaster";
+
+// One student's own bookings, saved homes and reviews — never prerendered
+// and never served from a shared cache.
+export const dynamic = "force-dynamic";
 
 const STATUS: Record<
   string,
@@ -113,6 +118,7 @@ export default async function StudentDashboardPage({
 
   return (
     <div className="pb-28 md:pb-0">
+      <AppToaster />
       {/* ── Header ────────────────────────────────────────── */}
       <div className="hairline-b bg-[var(--paper)]">
         <div className="shell py-10 lg:py-14">

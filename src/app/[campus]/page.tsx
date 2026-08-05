@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ArrowRight, Building2, Search } from "lucide-react";
 import { ListingTile } from "@/components/property/listing-tile";
+import {
+  getCampusBySlug,
+  getFeaturedProperties,
+  getNeighbourhoodsForCampus,
+} from "@/lib/data/campus";
 import { walkMinutes } from "@/lib/utils";
 
 const PROPERTY_TYPES = [
@@ -20,40 +24,21 @@ export default async function CampusHomePage({
   params: Promise<{ campus: string }>;
 }) {
   const { campus } = await params;
-  const supabase = await createClient();
-
-  const { data: campusData } = await supabase
-    .from("campuses")
-    .select("*, universities(name)")
-    .eq("slug", campus)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .single();
+  const campusData = await getCampusBySlug(campus);
 
   if (!campusData) {
     notFound();
   }
 
-  const { data: featuredProperties } = await supabase
-    .from("property_listings")
-    .select("*")
-    .eq("campus_id", campusData.id)
-    .eq("status", "published")
-    .not("featured_order", "is", null)
-    .order("featured_order", { ascending: true })
-    .limit(6);
-
-  const { data: neighbourhoods } = await supabase
-    .from("neighbourhoods")
-    .select("*")
-    .eq("campus_id", campusData.id)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("name");
+  // Both reads are cached and independent, so run them together rather
+  // than paying two round-trips in sequence on a cold cache.
+  const [featured, neighbourhoods] = await Promise.all([
+    getFeaturedProperties(campusData.id),
+    getNeighbourhoodsForCampus(campusData.id),
+  ]);
 
   const campusLat = Number(campusData.latitude);
   const campusLng = Number(campusData.longitude);
-  const featured = featuredProperties ?? [];
 
   return (
     <div className="pb-24 md:pb-0">

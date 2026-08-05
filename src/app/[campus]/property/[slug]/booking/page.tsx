@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { BookingForm } from "./booking-form";
+import { AppToaster } from "@/components/ui/app-toaster";
+
+// Reads the signed-in student and live room availability before letting
+// anyone request a room — always rendered per request.
+export const dynamic = "force-dynamic";
 
 export default async function BookingPage({
   params,
@@ -60,12 +65,15 @@ export default async function BookingPage({
   const isBookable = room.is_available === true && room.status === "available";
 
   return (
-    <BookingForm
+    <>
+      <AppToaster />
+      <BookingForm
       room={room}
       propertySlug={slug}
       campusSlug={campus}
       propertyTitle={property.title}
-      isBookable={isBookable}
-    />
+        isBookable={isBookable}
+      />
+    </>
   );
 }

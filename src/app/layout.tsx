@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Instrument_Serif } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 /* Primary voice — a precise, contemporary grotesque. Everything in the
@@ -99,6 +98,19 @@ export default function RootLayout({
       lang="en"
       className={`${geist.variable} ${editorial.variable} h-full antialiased`}
     >
+      <head>
+        {/*
+          Entrance animations hide their element until it scrolls into
+          view. That hidden state is scoped to this class, set before
+          first paint, so a page whose JavaScript never arrives renders
+          everything visible instead of blank.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add('js-reveal')`,
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         <a
           href="#main"
@@ -107,16 +119,6 @@ export default function RootLayout({
           Skip to content
         </a>
         {children}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              borderRadius: "14px",
-              border: "1px solid var(--border)",
-              boxShadow: "var(--shadow-lifted)",
-            },
-          }}
-        />
       </body>
     </html>
   );
