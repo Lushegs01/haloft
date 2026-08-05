@@ -14,19 +14,17 @@ export function LegalHeader({
   updated: string;
 }) {
   return (
-    <header className="mb-10">
-      <h1
-        className="text-3xl lg:text-4xl font-extrabold text-foreground mb-2"
-        style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-      >
-        {title}
-      </h1>
-      <p className="text-sm text-muted-foreground">Last updated: {updated}</p>
-      <div className="mt-4 rounded-xl border border-amber/30 bg-amber/5 px-4 py-3 text-sm text-muted-foreground">
-        This is a plain-language summary provided in good faith. It is not
-        legal advice and should be reviewed by a qualified legal professional
-        before launch.
-      </div>
+    <header className="mb-12">
+      <p className="label label-rule max-w-[12rem]">Legal</p>
+      <h1 className="mt-6 display-2 text-ink">{title}</h1>
+      <p className="mt-3 text-[13.5px] text-muted-foreground">
+        Last updated: {updated}
+      </p>
+      <p className="mt-6 border-l-2 border-[var(--sand-deep)]/40 pl-4 text-[13.5px] leading-[1.65] text-muted-foreground">
+        This is a plain-language summary written in good faith. It is not legal
+        advice, and a qualified legal professional should review it before it
+        is relied on.
+      </p>
     </header>
   );
 }
@@ -39,13 +37,13 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-bold text-foreground mb-3">{title}</h2>
-      <div className="space-y-3 text-[15px] leading-relaxed text-muted-foreground">
+    <section className="border-t border-[var(--line)] py-8">
+      <h2 className="display-4 text-ink">{title}</h2>
+      <div className="mt-4 space-y-3.5 text-[15px] leading-[1.7] text-ink-soft">
         {children}
       </div>
     </section>
   );
 }
 
-export const CONTACT_EMAIL = "support@haloft.homes";
+export { CONTACT_EMAIL } from "@/lib/constants";

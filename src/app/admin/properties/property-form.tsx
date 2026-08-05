@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createProperty, updateProperty } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,6 @@ interface PropertyFormProps {
 export function PropertyForm({ property, campuses, neighbourhoods, landlords }: PropertyFormProps) {
   const [loading, setLoading] = useState(false);
   const [selectedCampus, setSelectedCampus] = useState(property?.campus_id ?? "");
-  const router = useRouter();
   const isEdit = !!property;
 
   const filteredNeighbourhoods = neighbourhoods.filter(

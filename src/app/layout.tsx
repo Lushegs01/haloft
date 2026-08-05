@@ -1,61 +1,70 @@
-import type { Metadata } from "next";
-import { Inter, Bricolage_Grotesque } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Instrument_Serif } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+/* Primary voice — a precise, contemporary grotesque. Everything in the
+   product is set in this face; hierarchy comes from size, weight and
+   tracking rather than from a second UI font. */
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
 });
 
-// Display face — headlines, prices, the logo wordmark
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-display",
+/* Editorial counterpoint — used for single emphasised words in display
+   headlines and pull quotes. Never for UI. */
+const editorial = Instrument_Serif({
+  variable: "--font-editorial",
   subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
   display: "swap",
-  weight: ["600", "700", "800"],
 });
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
+const TITLE = "Haloft — Student housing near your university, without the chaos";
+const DESCRIPTION =
+  "Haloft helps Nigerian university students find rooms, self-contained apartments and hostels around campus — with clearer information, walk-times you can check, transparent pricing and fewer middlemen.";
 
 export const metadata: Metadata = {
   title: {
-    default: "Haloft — Find Trusted Student Accommodation Near Your University",
+    default: TITLE,
     template: "%s | Haloft",
   },
-  description:
-    "Haloft is the trusted accommodation marketplace for Nigerian university students. Verified listings, transparent pricing, walk-times to campus, and secure payments through Paystack.",
+  description: DESCRIPTION,
+  applicationName: "Haloft",
   keywords: [
-    "student housing",
-    "university accommodation",
-    "student rooms",
-    "campus housing",
-    "student rentals",
-    "hostels in Nigeria",
+    "student accommodation",
+    "student housing Nigeria",
+    "university hostels",
     "self contained near campus",
+    "FUNAAB accommodation",
+    "student rooms Abeokuta",
+    "campus housing",
     "Haloft",
   ],
+  authors: [{ name: "Haloft" }],
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "en_NG",
     siteName: "Haloft",
-    title: "Haloft — Find Trusted Student Accommodation Near Your University",
-    description:
-      "Haloft is the trusted accommodation marketplace for Nigerian university students. Verified listings, transparent pricing, walk-times to campus, and secure payments through Paystack.",
+    url: "/",
+    title: TITLE,
+    description: DESCRIPTION,
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Haloft — Find Trusted Student Accommodation Near Your University",
+        alt: "Haloft — student housing near your university",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Haloft — Find Trusted Student Accommodation Near Your University",
-    description:
-      "Haloft is the trusted accommodation marketplace for Nigerian university students. Verified listings, transparent pricing, and secure payments.",
+    title: TITLE,
+    description: DESCRIPTION,
     images: ["/og-image.jpg"],
   },
   robots: {
@@ -69,12 +78,15 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes"
-  ),
-  alternates: {
-    canonical: "/",
-  },
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: "/" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f7f7f2",
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -85,17 +97,23 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${bricolage.variable} h-full antialiased`}
+      className={`${geist.variable} ${editorial.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="flex min-h-full flex-col font-sans">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:inline-flex focus:h-11 focus:items-center focus:rounded-[10px] focus:bg-[var(--navy)] focus:px-4 focus:text-[14px] focus:font-medium focus:text-white"
+        >
+          Skip to content
+        </a>
         {children}
         <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
-              borderRadius: "12px",
+              borderRadius: "14px",
               border: "1px solid var(--border)",
-              boxShadow: "0 8px 32px rgb(0 0 0 / 0.12)",
+              boxShadow: "var(--shadow-lifted)",
             },
           }}
         />

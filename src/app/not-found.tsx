@@ -1,70 +1,45 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 import { HaloftLogo } from "@/components/ui/logo";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 text-center">
-      {/* Logo */}
-      <Link href="/" className="mb-12">
-        <HaloftLogo size={30} />
-      </Link>
+    <div className="flex min-h-screen flex-col bg-[var(--paper)]">
+      <div className="shell flex h-[76px] items-center">
+        <Link href="/" aria-label="Haloft — home">
+          <HaloftLogo size={28} markId="notfound" />
+        </Link>
+      </div>
 
-      {/* 404 number */}
-      <div className="relative mb-6">
-        <p
-          className="text-[120px] sm:text-[160px] font-extrabold leading-none select-none"
-          style={{
-            fontFamily: "var(--font-inter)",
-            background: "linear-gradient(135deg, hsl(var(--primary)/0.15) 0%, hsl(var(--primary)/0.05) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
-          404
-        </p>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Search className="h-8 w-8 text-primary" />
+      <main id="main" className="shell flex flex-1 items-center py-16">
+        <div className="max-w-[38rem]">
+          <p className="label label-rule max-w-[10rem]">404</p>
+          <h1 className="mt-6 display-2 text-ink">
+            That address doesn&apos;t exist.
+          </h1>
+          <p className="lede mt-5">
+            The page may have moved, or the listing behind it may have come
+            down. Either way, the search still works.
+          </p>
+
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={`/${DEFAULT_CAMPUS_SLUG}/search`}
+              className="group inline-flex h-13 items-center justify-center gap-2 rounded-[10px] bg-[var(--navy)] px-6 text-[14.5px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+            >
+              Browse homes near campus
+              <ArrowRight className="size-4 arrow-nudge" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex h-13 items-center justify-center rounded-[10px] border border-[var(--line-strong)] px-6 text-[14.5px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)]"
+            >
+              Back to Haloft
+            </Link>
           </div>
         </div>
-      </div>
-
-      <h1
-        className="text-2xl sm:text-3xl font-extrabold text-foreground mb-3"
-        style={{ fontFamily: "var(--font-inter)", letterSpacing: "-0.03em" }}
-      >
-        Page not found
-      </h1>
-      <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
-        The page you&apos;re looking for doesn&apos;t exist or may have moved. Let&apos;s get you back to finding great accommodation.
-      </p>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Link href="/">
-          <Button className="gap-2 rounded-full px-6 shadow-md shadow-primary/20">
-            <Home className="h-4 w-4" />
-            Go Home
-          </Button>
-        </Link>
-        <Link href={`/${DEFAULT_CAMPUS_SLUG}/search`}>
-          <Button variant="outline" className="gap-2 rounded-full px-6">
-            <Search className="h-4 w-4" />
-            Browse Listings
-          </Button>
-        </Link>
-      </div>
-
-      <Link
-        href="javascript:history.back()"
-        className="mt-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Go back
-      </Link>
+      </main>
     </div>
   );
 }

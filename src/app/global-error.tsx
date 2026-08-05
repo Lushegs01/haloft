@@ -1,7 +1,8 @@
 "use client";
 
 // Catches errors thrown in the root layout itself. Must render its own
-// <html>/<body> because it replaces the whole document.
+// <html>/<body> because it replaces the whole document — and cannot rely
+// on the stylesheet having loaded, so the brand is restated inline.
 export default function GlobalError({
   error,
   reset,
@@ -17,41 +18,80 @@ export default function GlobalError({
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
           justifyContent: "center",
-          fontFamily: "system-ui, sans-serif",
-          background: "#f8fbff",
-          color: "#1e3a6e",
-          textAlign: "center",
-          padding: "1rem",
+          fontFamily: "ui-sans-serif, system-ui, sans-serif",
+          background: "#f7f7f2",
+          color: "#101820",
+          padding: "clamp(1.5rem, 6vw, 4.5rem)",
         }}
       >
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.75rem" }}>
-          Something went wrong
-        </h1>
-        <p style={{ color: "#6b7fa8", maxWidth: "28rem", marginBottom: "2rem" }}>
-          An unexpected error occurred. Please try again.
-        </p>
-        <button
-          onClick={reset}
-          style={{
-            background: "#e86530",
-            color: "#fff",
-            border: "none",
-            borderRadius: "9999px",
-            padding: "0.75rem 1.75rem",
-            fontSize: "1rem",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Try again
-        </button>
-        {error.digest && (
-          <p style={{ marginTop: "2rem", fontSize: "0.75rem", color: "#94a3b8" }}>
-            Error reference: {error.digest}
+        <div style={{ maxWidth: "34rem" }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.6875rem",
+              fontWeight: 600,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color: "#66706b",
+            }}
+          >
+            Something broke
           </p>
-        )}
+          <h1
+            style={{
+              margin: "1.5rem 0 0",
+              fontSize: "clamp(1.875rem, 4vw, 2.75rem)",
+              lineHeight: 1.08,
+              letterSpacing: "-0.034em",
+              fontWeight: 500,
+            }}
+          >
+            Haloft didn&apos;t load properly.
+          </h1>
+          <p
+            style={{
+              margin: "1.25rem 0 0",
+              maxWidth: "40ch",
+              fontSize: "1rem",
+              lineHeight: 1.62,
+              color: "#66706b",
+            }}
+          >
+            It&apos;s on our side, not yours. Try again — if it keeps happening,
+            the reference below helps us find it.
+          </p>
+          <button
+            onClick={reset}
+            style={{
+              marginTop: "2.25rem",
+              background: "#1a2a44",
+              color: "#fff",
+              border: "none",
+              borderRadius: "10px",
+              padding: "0 1.5rem",
+              height: "3.25rem",
+              fontSize: "0.9rem",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Try again
+          </button>
+          {error.digest && (
+            <p
+              style={{
+                marginTop: "2.5rem",
+                paddingTop: "1.25rem",
+                borderTop: "1px solid rgba(16,24,32,0.1)",
+                fontSize: "0.75rem",
+                color: "#66706b",
+              }}
+            >
+              Reference: {error.digest}
+            </p>
+          )}
+        </div>
       </body>
     </html>
   );

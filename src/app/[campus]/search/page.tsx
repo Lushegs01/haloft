@@ -1,12 +1,9 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import {
-  SearchResults,
-  SearchFilters,
-  SearchSkeleton,
-} from "@/components/search/search-results";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
+import { SearchFilters, SearchSkeleton } from "@/components/search/search-results";
+import { SearchResults } from "@/components/search/results";
 
 export default async function SearchPage({
   params,
@@ -43,44 +40,84 @@ export default async function SearchPage({
   const filters = {
     neighbourhoodId: queryParams.neighbourhood as string | undefined,
     propertyType: queryParams.type as string | undefined,
-    minPrice: queryParams.minPrice ? parseInt(queryParams.minPrice as string, 10) : undefined,
-    maxPrice: queryParams.maxPrice ? parseInt(queryParams.maxPrice as string, 10) : undefined,
-    amenities: queryParams.amenities ? (queryParams.amenities as string).split(",") : undefined,
+    minPrice: queryParams.minPrice
+      ? parseInt(queryParams.minPrice as string, 10)
+      : undefined,
+    maxPrice: queryParams.maxPrice
+      ? parseInt(queryParams.maxPrice as string, 10)
+      : undefined,
+    amenities: queryParams.amenities
+      ? (queryParams.amenities as string).split(",")
+      : undefined,
     search: queryParams.q as string | undefined,
   };
-  const page = Math.max(1, parseInt((queryParams.page as string) ?? "1", 10) || 1);
+  const page = Math.max(
+    1,
+    parseInt((queryParams.page as string) ?? "1", 10) || 1
+  );
 
   return (
-    <div className="flex flex-col min-h-full pb-16 md:pb-0">
+    <div className="pb-24 md:pb-0">
+      {/* Search bar — the one thing that must always be reachable */}
+      <div className="hairline-b bg-[var(--paper)]">
+        <div className="shell py-6 lg:py-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h1 className="display-3 text-ink">Homes near {campusData.name}</h1>
+              {filters.search && (
+                <p className="mt-2 text-[13.5px] text-muted-foreground">
+                  Showing matches for &ldquo;{filters.search}&rdquo;
+                </p>
+              )}
+            </div>
 
-      {/* Sticky search header */}
-      <div className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="container mx-auto px-4 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <form action={`/${campus}/search`} className="flex-1 max-w-lg">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <form
+              action={`/${campus}/search`}
+              className="w-full lg:max-w-[26rem]"
+              role="search"
+            >
+              {/* Keep the active filters when the query changes */}
+              {Object.entries(queryParams).map(([key, value]) =>
+                key === "q" || key === "page" || value === undefined ? null : (
+                  <input
+                    key={key}
+                    type="hidden"
+                    name={key}
+                    value={Array.isArray(value) ? value.join(",") : value}
+                  />
+                )
+              )}
+              <label htmlFor="search-q" className="sr-only">
+                Search homes near {campusData.name}
+              </label>
+              <div className="flex h-12 items-center gap-2.5 rounded-[11px] border border-[var(--line-strong)] bg-card px-4 transition-colors focus-within:border-[var(--teal-deep)]">
+                <Search
+                  className="size-[18px] shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <input
+                  id="search-q"
                   name="q"
                   defaultValue={filters.search ?? ""}
-                  placeholder={`Search near ${campusData.name}…`}
-                  className="w-full rounded-full border border-border bg-muted/50 pl-11 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 focus:bg-background transition-all"
+                  placeholder="Area, landmark or home name"
+                  autoComplete="off"
+                  className="h-full w-full bg-transparent text-[14.5px] text-ink outline-none placeholder:text-muted-foreground/80"
                 />
+                <button
+                  type="submit"
+                  className="shrink-0 text-[13px] font-medium text-[var(--teal-deep)] transition-opacity hover:opacity-70"
+                >
+                  Search
+                </button>
               </div>
             </form>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground hidden md:flex shrink-0">
-              <SlidersHorizontal className="h-4 w-4" />
-              <span>{campusData.name}</span>
-            </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 py-8 flex-1">
-        <div className="flex flex-col lg:flex-row gap-8">
-
-          {/* Filters sidebar */}
-          <aside className="w-full lg:w-72 shrink-0">
+      <div className="shell py-9 lg:py-12">
+        <div className="grid grid-cols-12 gap-y-8 lg:gap-x-12">
+          <aside className="col-span-12 lg:col-span-3">
             <SearchFilters
               campusSlug={campus}
               neighbourhoods={neighbourhoods ?? []}
@@ -88,9 +125,11 @@ export default async function SearchPage({
             />
           </aside>
 
-          {/* Results */}
-          <div className="flex-1 min-w-0">
-            <Suspense key={JSON.stringify({ filters, page })} fallback={<SearchSkeleton />}>
+          <div className="col-span-12 min-w-0 lg:col-span-9">
+            <Suspense
+              key={JSON.stringify({ filters, page })}
+              fallback={<SearchSkeleton />}
+            >
               <SearchResults
                 campusId={campusData.id}
                 campusSlug={campus}

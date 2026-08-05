@@ -48,7 +48,9 @@ export default async function CampusLayout({
   return (
     <div className="flex min-h-full flex-col">
       <Header campusSlug={campusData.slug} campusName={campusData.name} />
-      <main className="flex-1">{children}</main>
+      <main id="main" className="flex-1">
+        {children}
+      </main>
       <Footer />
     </div>
   );

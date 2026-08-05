@@ -86,10 +86,12 @@ src/
     [campus]/        Campus-scoped public pages
     admin/           Admin CMS (protected)
     auth/            Authentication pages
+    globals.css      Design tokens + the whole utility layer
   components/
-    layout/          Header, Footer, shell
-    property/        Property detail components
-    search/          Search results & filters
+    haloft/          Landing-page sections and marketplace primitives
+    layout/          Header, Footer, auth shell
+    property/        Property detail + the shared listing tile
+    search/          Search filters & results
     ui/              shadcn/ui components
   hooks/             React hooks (useAuth)
   lib/
@@ -98,6 +100,32 @@ src/
   types/             TypeScript database types
   db/migrations/     SQL schema & seed data
 ```
+
+## Design system
+
+Tokens live in `src/app/globals.css` and nothing outside it should invent a
+colour, radius or shadow.
+
+- **Canvas** limestone `#f7f7f2`, with `--paper-warm` and `--paper-sage` marking
+  chapter changes, and `--night` for dark sections.
+- **Ink** `#101820` for text, `--ink-soft` for secondary copy, `--muted-foreground`
+  for metadata.
+- **Navy** `#1a2a44` is the primary action colour. **Teal** `#2a9d8f` (use
+  `--teal-deep` for text — it passes AA) signals verification and trust.
+  **Sand** `#f4a261` (`--sand-deep` for text) belongs to the property-owner
+  chapter and to warm highlights.
+- Type is Geist throughout, with Instrument Serif reserved for single
+  emphasised phrases (`.editorial`). Scale: `.display-1` → `.display-4`,
+  `.lede`, `.label`.
+- Layout: `.shell` (1400px max, responsive gutters) and three vertical
+  rhythms — `.chapter`, `.chapter-tight`.
+
+### Imagery
+
+Listing photography is real and comes from the catalogue. Where a listing has
+no photo yet, `components/haloft/elevation.tsx` draws a façade study in the
+brand tones rather than substituting a stock photo, and the card says the
+photo arrives after the visit. Sample data is always badged as sample.
 
 ## License
 

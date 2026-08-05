@@ -1,163 +1,122 @@
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  ArrowRight,
-  AtSign,
-  Globe,
-  ExternalLink,
-  ShieldCheck,
-  MapPin,
-} from "lucide-react";
-import { HaloftLogoDark } from "@/components/ui/logo";
-import { Roofline } from "@/components/ui/roofline";
+import { HaloftLogo } from "@/components/ui/logo";
+import { CONTACT_EMAIL, DEFAULT_CAMPUS_SLUG, SOCIAL_LINKS } from "@/lib/constants";
 
-const linkColumns = [
-  {
-    title: "Company",
-    links: [
-      { label: "About Haloft", href: "/" },
-      { label: "Careers", href: "/" },
-      { label: "Press", href: "/" },
-      { label: "Contact Us", href: "/" },
-    ],
-  },
-  {
-    title: "Explore",
-    links: [
-      { label: "Find Accommodation", href: "/" },
-      { label: "How It Works", href: "/" },
-      { label: "Safety Guide", href: "/" },
-      { label: "Student FAQs", href: "/" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "Help Centre", href: "/" },
-      { label: "Cancellation Options", href: "/legal/refunds" },
-      { label: "Report a Listing", href: "/" },
-      { label: "Host Resources", href: "/" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy Policy", href: "/legal/privacy" },
-      { label: "Terms of Service", href: "/legal/terms" },
-      { label: "Refund Policy", href: "/legal/refunds" },
-      { label: "Cookie Policy", href: "/" },
-    ],
-  },
-];
+export function Footer({ campusSlug }: { campusSlug?: string } = {}) {
+  const campus = campusSlug ?? DEFAULT_CAMPUS_SLUG;
 
-const socials = [
-  { label: "Twitter", icon: AtSign },
-  { label: "Instagram", icon: Globe },
-  { label: "LinkedIn", icon: ExternalLink },
-];
+  const columns = [
+    {
+      title: "Explore",
+      links: [
+        { label: "Find a home", href: `/${campus}/search` },
+        { label: "Universities", href: "/#universities" },
+        { label: "How it works", href: "/#how-it-works" },
+      ],
+    },
+    {
+      title: "Property owners",
+      links: [
+        {
+          label: "List a property",
+          href: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+            "Listing a property on Haloft"
+          )}`,
+        },
+        { label: "How listings work", href: "/#for-owners" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About Haloft", href: "/#about" },
+        { label: "Contact", href: `mailto:${CONTACT_EMAIL}` },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy", href: "/legal/privacy" },
+        { label: "Terms", href: "/legal/terms" },
+        { label: "Refunds", href: "/legal/refunds" },
+      ],
+    },
+  ];
 
-export function Footer() {
   return (
-    <footer className="relative mt-auto overflow-hidden bg-night text-night-foreground">
-      {/* Roofline watermark */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.045]" aria-hidden="true">
-        <div className="absolute -right-24 -top-24 h-[420px] w-[420px]">
-          <svg viewBox="0 0 420 420" fill="none" className="h-full w-full">
-            <path d="M 113 297 A 138 138 0 1 1 307 297" stroke="#edf2fa" strokeWidth="10" strokeLinecap="round" />
-            <path d="M 113 297 L 210 190 L 307 297" stroke="#edf2fa" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="210" cy="190" r="14" fill="#f07540" />
-          </svg>
-        </div>
-        <div className="absolute inset-0 bg-dots-light" />
-      </div>
-
-      {/* Top gradient accent */}
-      <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-      <div className="relative container mx-auto px-4 lg:px-8">
-        {/* Newsletter + Logo row */}
-        <div className="flex flex-col items-start justify-between gap-8 pb-10 pt-14 lg:flex-row lg:items-center">
-          <div>
-            <div className="flex items-center gap-3">
-              <HaloftLogoDark size={34} />
-              <div>
-                <p className="font-display text-lg font-extrabold text-white">Haloft</p>
-                <p className="text-sm text-night-foreground/60">Trusted student accommodation, simplified.</p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-night-foreground/55">
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-teal" />
-                Every listing inspected in person
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-teal" />
-                FUNAAB · Abeokuta — live now
-              </span>
-            </div>
+    <footer className="mt-auto bg-[var(--night)] text-[var(--night-foreground)]">
+      <div className="shell py-16 lg:py-20">
+        <div className="grid grid-cols-12 gap-y-12 lg:gap-x-10">
+          {/* Identity */}
+          <div className="col-span-12 lg:col-span-4">
+            <Link href="/" aria-label="Haloft — home">
+              <HaloftLogo size={30} tone="light" markId="footer" />
+            </Link>
+            <p className="mt-5 max-w-[24ch] text-[15px] leading-[1.5] text-white/70">
+              Student housing, made clearer.
+            </p>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="mt-5 inline-block border-b border-white/20 pb-0.5 text-[13.5px] text-white/60 transition-colors hover:border-white/50 hover:text-white/90"
+            >
+              {CONTACT_EMAIL}
+            </a>
           </div>
-          <div className="flex w-full max-w-md items-center gap-2">
-            <Input
-              type="email"
-              placeholder="Enter your email"
-              className="h-12 rounded-full border-night-foreground/15 bg-night-foreground/5 text-night-foreground placeholder:text-night-foreground/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
-            />
-            <Button className="h-12 shrink-0 rounded-full px-6 font-semibold shadow-lg shadow-primary/25">
-              Subscribe
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
 
-        {/* Link columns */}
-        <div className="grid grid-cols-2 gap-10 pb-12 md:grid-cols-4 lg:gap-12">
-          {linkColumns.map((col) => (
-            <div key={col.title} className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-night-foreground/50">
-                {col.title}
-              </h3>
-              <ul className="space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    <Link
-                      href={l.href}
-                      className="text-sm text-night-foreground/70 transition-colors hover:text-teal"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        {/* Signature line */}
-        <div className="flex items-center gap-3 border-t border-night-foreground/10 py-8">
-          <Roofline width={24} stroke="#4ecab8" dot="var(--logo-orange)" className="opacity-70" />
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-night-foreground/40">
-            Inspected · Listed · Paid · Moved in
-          </p>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-night-foreground/10 py-6 sm:flex-row">
-          <p className="text-sm text-night-foreground/50">
-            © {new Date().getFullYear()} Haloft Technologies Ltd. All rights reserved.
-          </p>
-          <div className="flex items-center gap-3">
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-night-foreground/5 text-night-foreground/50 transition-colors hover:bg-night-foreground/10 hover:text-night-foreground"
-                aria-label={s.label}
-              >
-                <s.icon className="h-4 w-4" />
-              </a>
+          {/* Navigation */}
+          <div className="col-span-12 grid grid-cols-2 gap-y-10 sm:grid-cols-4 lg:col-span-7 lg:col-start-6 lg:gap-x-8">
+            {columns.map((column) => (
+              <nav key={column.title} aria-label={column.title}>
+                <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                  {column.title}
+                </h2>
+                <ul className="mt-3 space-y-0.5">
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      {link.href.startsWith("mailto:") ? (
+                        <a
+                          href={link.href}
+                          className="inline-block py-1.5 text-[13.5px] text-white/70 transition-colors hover:text-white"
+                        >
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link
+                          href={link.href}
+                          className="inline-block py-1.5 text-[13.5px] text-white/70 transition-colors hover:text-white"
+                        >
+                          {link.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             ))}
           </div>
+        </div>
+
+        <div className="mt-16 flex flex-col gap-4 border-t border-white/12 pt-7 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[12.5px] text-white/45">
+            © {new Date().getFullYear()} Haloft. All rights reserved.
+          </p>
+
+          {SOCIAL_LINKS.length > 0 && (
+            <ul className="flex items-center gap-6">
+              {SOCIAL_LINKS.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-[12.5px] text-white/50 transition-colors hover:text-white"
+                  >
+                    {social.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </footer>
