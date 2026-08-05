@@ -1,130 +1,93 @@
-"use client";
-
-import { motion, useReducedMotion, type Variants } from "framer-motion";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /**
  * Entrance primitives.
  *
- * Motion here does one job: telling the eye what arrived and in what
- * order. Everything moves a short distance, once, and the layout is
- * designed to read perfectly with motion switched off.
+ * These are Server Components. They emit a `data-reveal` attribute and a
+ * delay custom property; one small client observer (see reveal-observer)
+ * adds `is-in` when the element comes into view, and CSS does the rest.
+ * Nothing here hydrates, and the animation runs on the compositor.
  *
- * Note on reduced motion: the *visibility* of content is never gated on
- * the reduced-motion flag. `useReducedMotion` resolves on the client, so
- * branching the `initial` state on it would ship server HTML with
- * `opacity: 0` that never animates back for those users. Instead every
- * element keeps the same enter/exit states and reduced motion collapses
- * the duration to zero.
+ * Visibility is never gated on script: the hidden state lives behind a
+ * `.js-reveal` class set on <html> before first paint, so if JS never
+ * arrives the content is simply there.
  */
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+type Tag = "div" | "section" | "li" | "article" | "figure" | "header" | "ul" | "ol";
+
+function delayStyle(delay: number, y?: number): CSSProperties {
+  const style: Record<string, string> = {};
+  if (delay) style["--reveal-delay"] = `${Math.round(delay * 1000)}ms`;
+  if (y !== undefined) style["--reveal-y"] = `${y}px`;
+  return style as CSSProperties;
+}
 
 export function Reveal({
   children,
   delay = 0,
-  y = 16,
+  y,
   className,
-  as = "div",
+  as: Component = "div",
 }: {
   children: ReactNode;
+  /** Seconds, to match how the sections were authored. */
   delay?: number;
   y?: number;
   className?: string;
-  as?: "div" | "section" | "li" | "article" | "figure" | "header";
+  as?: Tag;
 }) {
-  const reduced = useReducedMotion();
-  const Component = motion[as];
-
   return (
-    <Component
-      className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.05, margin: "0px 0px -6% 0px" }}
-      transition={
-        reduced
-          ? { duration: 0 }
-          : { duration: 0.62, ease: EASE, delay }
-      }
-    >
+    <Component data-reveal="" className={className} style={delayStyle(delay, y)}>
       {children}
     </Component>
   );
 }
 
-/** Wraps a group whose children should arrive in sequence. */
+/**
+ * A group whose children arrive in sequence. The stagger is expressed as
+ * a per-child delay so the whole group still needs only one observer.
+ */
 export function Stagger({
   children,
   className,
-  step = 0.07,
-  as = "div",
+  as: Component = "div",
 }: {
   children: ReactNode;
   className?: string;
+  /** Seconds between children. Applied by StaggerItem via its index. */
   step?: number;
-  as?: "div" | "ul" | "section";
+  as?: Tag;
 }) {
-  const reduced = useReducedMotion();
-  const Component = motion[as];
-
-  const variants: Variants = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: reduced ? 0 : step,
-        delayChildren: reduced ? 0 : 0.04,
-      },
-    },
-  };
-
-  return (
-    <Component
-      className={className}
-      variants={variants}
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 0.02, margin: "0px 0px -6% 0px" }}
-    >
-      {children}
-    </Component>
-  );
+  return <Component className={className}>{children}</Component>;
 }
 
 export function StaggerItem({
   children,
   className,
-  y = 14,
-  as = "div",
+  index = 0,
+  step = 0.07,
+  y,
+  as: Component = "div",
 }: {
   children: ReactNode;
   className?: string;
+  /** Position in the group — drives the delay. */
+  index?: number;
+  step?: number;
   y?: number;
-  as?: "div" | "li" | "article";
+  as?: Tag;
 }) {
-  const reduced = useReducedMotion();
-  const Component = motion[as];
-
-  const variants: Variants = {
-    hidden: { opacity: 0, y },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: reduced ? { duration: 0 } : { duration: 0.6, ease: EASE },
-    },
-  };
-
   return (
-    <Component className={className} variants={variants}>
+    <Component
+      data-reveal=""
+      className={className}
+      style={delayStyle(index * step, y)}
+    >
       {children}
     </Component>
   );
 }
 
-/**
- * Masked image reveal — the crop opens rather than the image fading in,
- * which reads as photography being placed rather than a box appearing.
- */
 export function MaskReveal({
   children,
   delay = 0,
@@ -134,20 +97,10 @@ export function MaskReveal({
   delay?: number;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-
   return (
-    <motion.div
-      className={className}
-      initial={{ clipPath: "inset(12% 0% 0% 0%)", opacity: 0 }}
-      whileInView={{ clipPath: "inset(0% 0% 0% 0%)", opacity: 1 }}
-      viewport={{ once: true, amount: 0.05, margin: "0px 0px -6% 0px" }}
-      transition={
-        reduced ? { duration: 0 } : { duration: 0.9, ease: EASE, delay }
-      }
-    >
+    <div data-reveal="mask" className={className} style={delayStyle(delay)}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -167,24 +120,11 @@ export function LinesIn({
   lineClassName?: string;
   delay?: number;
 }) {
-  const reduced = useReducedMotion();
-
   return (
     <span className={className}>
       {lines.map((line, i) => (
-        <span key={i} className={`block overflow-hidden ${lineClassName ?? ""}`}>
-          <motion.span
-            className="block"
-            initial={{ y: "108%" }}
-            animate={{ y: "0%" }}
-            transition={
-              reduced
-                ? { duration: 0 }
-                : { duration: 0.85, ease: EASE, delay: delay + i * 0.075 }
-            }
-          >
-            {line}
-          </motion.span>
+        <span key={i} className={`reveal-line ${lineClassName ?? ""}`}>
+          <span style={delayStyle(delay + i * 0.075)}>{line}</span>
         </span>
       ))}
     </span>

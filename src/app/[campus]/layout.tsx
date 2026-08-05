@@ -2,19 +2,24 @@ import type { ReactNode } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { HomeOnlyFooter } from "@/components/layout/home-only-footer";
-import { createClient } from "@/lib/supabase/server";
+import { getActiveCampuses, getCampusBySlug } from "@/lib/data/campus";
 import { notFound } from "next/navigation";
+
+/** Campuses are data, so the set is small and known at build time. */
+export async function generateStaticParams() {
+  try {
+    const campuses = await getActiveCampuses();
+    return campuses.map((c) => ({ campus: c.slug }));
+  } catch {
+    // No database reachable during the build — fall back to rendering on
+    // demand rather than failing the build.
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ campus: string }> }) {
   const { campus } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("campuses")
-    .select("name, universities(name)")
-    .eq("slug", campus)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .single();
+  const data = await getCampusBySlug(campus);
 
   if (!data) return { title: "Campus Not Found" };
 
@@ -32,15 +37,7 @@ export default async function CampusLayout({
   params: Promise<{ campus: string }>;
 }) {
   const { campus } = await params;
-  const supabase = await createClient();
-
-  const { data: campusData } = await supabase
-    .from("campuses")
-    .select("name, slug, university_id")
-    .eq("slug", campus)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .single();
+  const campusData = await getCampusBySlug(campus);
 
   if (!campusData) {
     notFound();

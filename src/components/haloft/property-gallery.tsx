@@ -74,6 +74,8 @@ export function PropertyGallery({
               <StaggerItem
                 key={listing.id}
                 as="div"
+                index={i}
+                step={0.06}
                 className={`w-[76vw] max-w-[21rem] shrink-0 sm:w-[52vw] lg:w-auto lg:max-w-none lg:shrink ${layout.span} ${layout.offset}`}
               >
                 <PropertyCard

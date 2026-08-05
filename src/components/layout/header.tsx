@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Home, LogOut, Menu, Search, User, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HaloftLogo } from "@/components/ui/logo";
@@ -21,15 +20,20 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const reduced = useReducedMotion();
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const searchHref = `/${campusSlug ?? DEFAULT_CAMPUS_SLUG}/search`;
 
+  // Sentinel rather than a scroll listener, so nothing runs per frame.
   useEffect(() => {
-    const onScroll = () => setCondensed(window.scrollY > 16);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setCondensed(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -64,6 +68,8 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
 
   return (
     <>
+      <div ref={sentinelRef} aria-hidden="true" className="absolute top-4 h-px w-px" />
+
       <header
         className={`sticky top-0 z-50 w-full transition-[background-color,border-color,height] duration-300 ${
           condensed
@@ -142,16 +148,11 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                   </span>
                 </button>
 
-                <AnimatePresence>
-                  {accountOpen && (
-                    <motion.div
-                      role="menu"
-                      initial={reduced ? undefined : { opacity: 0, y: -6 }}
-                      animate={reduced ? undefined : { opacity: 1, y: 0 }}
-                      exit={reduced ? undefined : { opacity: 0, y: -6 }}
-                      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-[12px] border border-[var(--line)] bg-card shadow-lifted"
-                    >
+                {accountOpen && (
+                  <div
+                    role="menu"
+                    className="menu-in absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-[12px] border border-[var(--line)] bg-card shadow-lifted"
+                  >
                       <div className="border-b border-[var(--line)] px-4 py-3">
                         <p className="truncate text-[13px] font-medium text-ink">
                           {user.email}
@@ -178,9 +179,8 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                           </button>
                         </form>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                  </div>
+                )}
               </div>
             )}
 
@@ -197,14 +197,9 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
         </div>
       </header>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            className="fixed inset-0 z-[60] flex flex-col bg-[var(--paper)] md:hidden"
-            initial={reduced ? undefined : { opacity: 0, y: -8 }}
-            animate={reduced ? undefined : { opacity: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      {mobileOpen && (
+          <div
+            className="sheet-in fixed inset-0 z-[60] flex flex-col bg-[var(--paper)] md:hidden"
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
@@ -278,9 +273,8 @@ export function Header({ campusSlug, campusName }: HeaderProps) {
                 </>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* Campus pages keep a bottom bar on small screens — three
           destinations, each a distinct place to be. */}

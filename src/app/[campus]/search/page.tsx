@@ -1,9 +1,15 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Search } from "lucide-react";
 import { SearchFilters, SearchSkeleton } from "@/components/search/search-results";
 import { SearchResults } from "@/components/search/results";
+import { getCampusBySlug, getNeighbourhoodsForCampus } from "@/lib/data/campus";
+
+// Results depend on the query string, so this page renders per request.
+// The scalability win is in the data layer, not here: getCampusProperties
+// is cached per filter set, so a request still costs no database queries
+// once that entry is warm.
+export const dynamic = "force-dynamic";
 
 export default async function SearchPage({
   params,
@@ -15,27 +21,13 @@ export default async function SearchPage({
   const { campus } = await params;
   const queryParams = await searchParams;
 
-  const supabase = await createClient();
-
-  const { data: campusData } = await supabase
-    .from("campuses")
-    .select("id, name, slug, university_id, latitude, longitude")
-    .eq("slug", campus)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .single();
+  const campusData = await getCampusBySlug(campus);
 
   if (!campusData) {
     notFound();
   }
 
-  const { data: neighbourhoods } = await supabase
-    .from("neighbourhoods")
-    .select("*")
-    .eq("campus_id", campusData.id)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("name");
+  const neighbourhoods = await getNeighbourhoodsForCampus(campusData.id);
 
   const filters = {
     neighbourhoodId: queryParams.neighbourhood as string | undefined,

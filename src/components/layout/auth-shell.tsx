@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import { HaloftLogo } from "@/components/ui/logo";
 import { Elevation } from "@/components/haloft/elevation";
+import { AppToaster } from "@/components/ui/app-toaster";
 
 const PROMISES = [
   "Ask for a room without paying anyone to see an address.",
@@ -28,6 +29,7 @@ export function AuthShell({
 }) {
   return (
     <div className="flex min-h-screen">
+      <AppToaster />
       <aside className="relative hidden shrink-0 flex-col justify-between overflow-hidden bg-[var(--night)] p-12 text-white lg:flex lg:w-[27rem] xl:w-[32rem]">
         {/* The façade sits under the copy as texture, not as an image:
             faded right down and masked away before it reaches the text. */}

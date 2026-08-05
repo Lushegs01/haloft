@@ -120,6 +120,50 @@ colour, radius or shadow.
 - Layout: `.shell` (1400px max, responsive gutters) and three vertical
   rhythms — `.chapter`, `.chapter-tight`.
 
+## Performance model
+
+The scalability property of this app is one invariant:
+
+> **A public page must never touch the cookie-bound Supabase client.**
+
+Public reads go through `src/lib/data/campus.ts`, which uses the anon key
+with no cookies and wraps every query in `unstable_cache`. That does two
+things at once: a page view costs **zero** Postgres queries once the cache
+entry is warm, and — because no dynamic request API is touched — Next can
+serve `/[campus]` and `/[campus]/property/[slug]` from the ISR cache
+instead of rendering per visitor. One campus can then serve a whole
+intake off a handful of origin renders.
+
+Importing `@/lib/supabase/server` into one of those pages silently
+reverts both properties: the route becomes `ƒ` (server-rendered on
+demand) and every visitor hits the database again. If you need the signed-in
+user on a page, that page belongs in the dynamic set below.
+
+| Route | Rendering | Why |
+| --- | --- | --- |
+| `/`, `/[campus]`, `/[campus]/property/[slug]` | ISR, cached | Public, identical for everyone |
+| `/[campus]/search` | Per request | Output depends on the query string — but its data is still cached per filter set |
+| `/[campus]/dashboard`, `/…/booking`, `/admin/*` | `force-dynamic` | User-specific; must never be shared from a cache |
+
+Cache TTLs live at the top of `campus.ts`. They are generous because admin
+writes call `revalidateTag(CACHE_TAGS.properties)`, so a publish shows up
+immediately rather than waiting out the TTL.
+
+Other decisions that hold the line:
+
+- **Middleware runs on five paths, not all of them.** Session refresh is
+  needed for admin, auth, payment, the dashboard and booking. Putting it
+  in front of public browsing would add an auth round-trip to every page
+  view and stop those routes being cacheable. The header's signed-in state
+  comes from the browser client instead.
+- **No JS animation library.** Entrances are `opacity`/`transform` under a
+  `.js-reveal` class with one shared IntersectionObserver, so they run on
+  the compositor. The hidden state is scoped to a class set by an inline
+  script, so content is never hidden behind a bundle that failed to load.
+- **Toasts mount per route.** Nothing on the browsing path raises one.
+- Run `009_search_indexes.sql`: amenity filters and description search
+  had no index, and the landing page sends students straight into both.
+
 ### Imagery
 
 Listing photography is real and comes from the catalogue. Where a listing has

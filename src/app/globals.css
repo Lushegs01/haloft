@@ -457,6 +457,92 @@ select:focus-visible {
   text-underline-offset: 3px;
 }
 
+/* ==================================================================
+   ENTRANCE MOTION
+   ------------------------------------------------------------------
+   All of this used to run through a JS animation library, which meant
+   ~34 KB of script on every route and a main-thread tween per element.
+   It is now opacity and transform only, so it runs on the compositor
+   and costs one IntersectionObserver for the whole page.
+
+   The hidden state is scoped to `.js-reveal`, a class an inline script
+   sets on <html> before first paint. If that script never runs — no JS,
+   a parse error, a blocked bundle — the class is absent and every
+   element renders visible. Content is never hidden behind script.
+   ================================================================== */
+
+.js-reveal [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-y, 16px), 0);
+  will-change: opacity, transform;
+}
+
+.js-reveal [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.62s var(--ease-out-soft) var(--reveal-delay, 0ms),
+    transform 0.62s var(--ease-out-soft) var(--reveal-delay, 0ms);
+  will-change: auto;
+}
+
+/* The crop opens rather than the image fading in, so it reads as
+   photography being placed rather than a box appearing. */
+.js-reveal [data-reveal="mask"] {
+  clip-path: inset(12% 0 0 0);
+  transform: none;
+}
+
+.js-reveal [data-reveal="mask"].is-in {
+  clip-path: inset(0 0 0 0);
+  transition:
+    opacity 0.9s var(--ease-out-soft) var(--reveal-delay, 0ms),
+    clip-path 0.9s var(--ease-out-soft) var(--reveal-delay, 0ms);
+}
+
+/* A headline that arrives line by line. Above the fold, so it plays on
+   load rather than waiting for an observer. */
+.reveal-line {
+  display: block;
+  overflow: hidden;
+}
+
+.js-reveal .reveal-line > span {
+  display: block;
+  animation: lineRise 0.85s var(--ease-out-soft) var(--reveal-delay, 0ms) both;
+}
+
+@keyframes lineRise {
+  from { transform: translate3d(0, 108%, 0); }
+  to   { transform: none; }
+}
+
+/* Full-screen sheets (mobile menu, lightbox) */
+.sheet-in { animation: sheetIn 0.26s var(--ease-out-soft) both; }
+.sheet-item { animation: riseIn 0.4s var(--ease-out-soft) var(--reveal-delay, 0ms) both; }
+.fade-in { animation: fadeIn 0.2s ease-out both; }
+.menu-in { animation: menuIn 0.16s var(--ease-out-soft) both; }
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translate3d(0, -6px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes sheetIn {
+  from { opacity: 0; transform: translate3d(0, -10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes pulseSoft {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.55; }
@@ -480,7 +566,15 @@ select:focus-visible {
     scroll-behavior: auto !important;
   }
   html { scroll-behavior: auto; }
-  .lift:hover,
-  .card-hover:hover { transform: none; }
   .group:hover .img-zoom { transform: none; }
+
+  /* Nothing travels, and nothing waits to be revealed. */
+  .js-reveal [data-reveal],
+  .js-reveal [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    transition: none;
+  }
+  .js-reveal .reveal-line > span { animation: none; }
 }

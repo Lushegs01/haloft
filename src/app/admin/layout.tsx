@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { HaloftLogoDark } from "@/components/ui/logo";
+import { AppToaster } from "@/components/ui/app-toaster";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -55,6 +56,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-screen bg-muted/30 overflow-hidden">
+      <AppToaster />
 
       {/* ── Sidebar ─────────────────────────────────────── */}
       <aside className="w-64 bg-sidebar flex flex-col shrink-0 border-r border-sidebar-border">

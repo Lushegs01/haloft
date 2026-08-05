@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/haloft/navbar";
+import { RevealObserver } from "@/components/haloft/reveal-observer";
 import { Hero } from "@/components/haloft/hero";
 import { TrustStrip } from "@/components/haloft/trust-strip";
 import { ProblemStory } from "@/components/haloft/problem-story";
@@ -29,6 +30,7 @@ export default async function LandingPage() {
 
   return (
     <>
+      <RevealObserver />
       <Navbar />
       <main id="main" className="flex-1">
         <Hero universities={universities.universities} featured={featured} />
