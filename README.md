@@ -163,6 +163,14 @@ Other decisions that hold the line:
 - **Toasts mount per route.** Nothing on the browsing path raises one.
 - Run `009_search_indexes.sql`: amenity filters and description search
   had no index, and the landing page sends students straight into both.
+- Run `010_rls_initplan.sql`: RLS policies wrote `auth.uid()` bare, so
+  Postgres re-evaluated it for every candidate row. Wrapped in
+  `(select auth.uid())` the planner hoists it to an InitPlan and calls it
+  once per statement. **Write new policies that way** — a bare
+  `auth.uid()` or `public.is_admin()` in a policy is a per-row call, and
+  the Supabase linter will flag it. The exception is a helper that takes
+  a column (`is_campus_admin(campus_id)`): its result varies per row, so
+  wrapping it only builds a correlated subquery that cannot be hoisted.
 
 ### Imagery
 
