@@ -179,6 +179,14 @@ no photo yet, `components/haloft/elevation.tsx` draws a façade study in the
 brand tones rather than substituting a stock photo, and the card says the
 photo arrives after the visit. Sample data is always badged as sample.
 
+### The share card
+
+`public/og-image.png` is what a link renders as in WhatsApp, which is how
+most students will meet Haloft. It is not hand-drawn: `scripts/og-image.html`
+is a real 1200×630 page using the site's fonts, palette and façade study, and
+`scripts/build-og-image.mjs` screenshots it. Edit the HTML, re-run the script,
+commit the PNG — see the script header for the one-off install it needs.
+
 ## License
 
 Private — All rights reserved.
