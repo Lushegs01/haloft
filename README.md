@@ -186,6 +186,24 @@ Other decisions that hold the line:
   stays public: URLs still work for whoever holds one, they are just no
   longer discoverable.
 
+### Load testing
+
+Run the **Load test** workflow from the Actions tab — never `autocannon`
+from a laptop. A home connection saturates around 10 Mbps, and autocannon
+sends no `Accept-Encoding`, so it pulls 161 KB where a browser takes 16 KB.
+Between them those two facts mean a local run measures the wire and reports
+it as if the site were failing. GitHub's runners sit beside Vercel's `iad1`
+and the workflow sets the header.
+
+Point it at `dynamic`. `/[campus]` is CDN-cached HTML, so testing it mostly
+tests Vercel; `/[campus]/search` renders per request and is the route that
+actually reaches Postgres. Watch **Supabase → Reports → API** while it runs:
+if the cached routes move the request count at all, something on that path
+has picked up the cookie-bound client and the ISR caching is gone.
+
+Read p99 and the 2xx rate. Requests per second, against a CDN, is mostly a
+fact about the network between the runner and the edge.
+
 ### Imagery
 
 Listing photography is real and comes from the catalogue. Where a listing has

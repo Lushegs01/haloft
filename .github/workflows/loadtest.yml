@@ -1,0 +1,79 @@
+name: Load test
+
+# Manual only. This fires real traffic at a real deployment and spends real
+# bandwidth quota, so it must never run on push, schedule or PR.
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Base URL, no trailing slash"
+        required: true
+        default: "https://haloft1.vercel.app"
+      profile:
+        description: "What to hit"
+        required: true
+        default: "dynamic"
+        type: choice
+        options:
+          - dynamic # /search — force-dynamic, queries Postgres per request
+          - cached # /[campus] — ISR, should never reach the database
+          - mixed # both, to see the difference side by side
+      connections:
+        description: "Concurrent connections (start at 50; 500 is a lot)"
+        required: true
+        default: "100"
+      duration:
+        description: "Seconds"
+        required: true
+        default: "30"
+
+jobs:
+  loadtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub's runners sit in Azure East US, next door to Vercel's iad1.
+      # That is the point of running here: a home connection saturates at
+      # ~10 Mbps and you end up measuring the link instead of the origin.
+      - name: Show the runner's bandwidth
+        run: |
+          echo "Runner egress check — anything under ~100 Mbit/s and the"
+          echo "numbers below are about this machine, not your site."
+          curl -sS -o /dev/null -w "  %{speed_download} bytes/sec\n" \
+            https://speed.cloudflare.com/__down?bytes=25000000 || true
+
+      - name: Warm the ISR cache
+        run: |
+          # A cold cache means the first wave all miss at once and every one
+          # of them renders. Real intake traffic does not arrive that way, so
+          # warm it first unless a stampede is what you are testing.
+          for p in / /funaab /funaab/search; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' "${{ inputs.base }}$p" || echo 000)
+            echo "  warm $p -> $code"
+          done
+
+      - name: Record what the CDN says about each route
+        run: |
+          {
+            echo "## Cache state before the run"
+            echo
+            echo "| Route | Status | x-vercel-cache |"
+            echo "| --- | --- | --- |"
+            for p in / /funaab "/funaab/search?q=self+contained"; do
+              h=$(curl -sSI "${{ inputs.base }}$p")
+              code=$(printf '%s' "$h" | awk 'BEGIN{RS="\r\n"} /^HTTP\/2/ {c=$2} END{print c}')
+              cache=$(printf '%s' "$h" | awk 'BEGIN{RS="\r\n"; IGNORECASE=1} /^x-vercel-cache:/ {print $2}')
+              echo "| \`$p\` | $code | ${cache:-none} |"
+            done
+            echo
+            echo "PRERENDER or HIT means the CDN answered and Postgres was never asked."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run
+        env:
+          BASE: ${{ inputs.base }}
+          PROFILE: ${{ inputs.profile }}
+          CONNS: ${{ inputs.connections }}
+          SECS: ${{ inputs.duration }}
+        run: node .github/workflows/loadtest.mjs
