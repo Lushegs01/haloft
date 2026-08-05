@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { HomeOnlyFooter } from "@/components/layout/home-only-footer";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -51,7 +52,9 @@ export default async function CampusLayout({
       <main id="main" className="flex-1">
         {children}
       </main>
-      <Footer />
+      <HomeOnlyFooter campusSlug={campusData.slug}>
+        <Footer campusSlug={campusData.slug} />
+      </HomeOnlyFooter>
     </div>
   );
 }

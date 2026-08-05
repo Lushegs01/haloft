@@ -3,14 +3,6 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Media } from "@/types/database";
@@ -144,16 +136,44 @@ export function MediaManager({
     setBusyId(null);
   }
 
+  /** Alt text is what a student on a screen reader gets instead of the
+   *  photo, and it is what the listing gallery reads out. Saved on blur
+   *  so the operator can tab straight down the column. */
+  async function handleAltText(item: Media, value: string) {
+    const next = value.trim();
+    if (next === (item.alt_text ?? "")) return;
+
+    setMedia((prev) =>
+      prev.map((m) => (m.id === item.id ? { ...m, alt_text: next || null } : m))
+    );
+
+    const { error } = await supabase
+      .from("media")
+      .update({ alt_text: next || null })
+      .eq("id", item.id);
+
+    if (error) {
+      toast.error(`Description not saved: ${error.message}`);
+      setMedia((prev) =>
+        prev.map((m) => (m.id === item.id ? { ...m, alt_text: item.alt_text } : m))
+      );
+    }
+  }
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <section className="rounded-[16px] border border-[var(--line)] bg-card p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <CardTitle>Photos</CardTitle>
-          <CardDescription>
-            The starred photo is the listing cover. JPEG, PNG, or WebP up to 5 MB.
-          </CardDescription>
+          <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
+            Photos
+          </h2>
+          <p className="mt-1.5 max-w-[52ch] text-[13px] leading-[1.6] text-muted-foreground">
+            Taken on the visit, of the rooms being offered. The starred photo is
+            the listing cover. JPEG, PNG or WebP, up to 5&nbsp;MB each.
+          </p>
         </div>
-        <div>
+
+        <div className="shrink-0">
           <input
             ref={inputRef}
             type="file"
@@ -162,82 +182,107 @@ export function MediaManager({
             className="hidden"
             onChange={(e) => handleFiles(e.target.files)}
           />
-          <Button
+          <button
             type="button"
             disabled={uploading}
             onClick={() => inputRef.current?.click()}
-            className="gap-2"
+            className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-[var(--navy)] px-5 text-[13.5px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-50"
           >
             {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             ) : (
-              <ImagePlus className="h-4 w-4" />
+              <ImagePlus className="size-4" aria-hidden="true" />
             )}
-            Upload Photos
-          </Button>
+            {uploading ? "Uploading…" : "Upload photos"}
+          </button>
         </div>
-      </CardHeader>
-      <CardContent>
-        {media.length === 0 ? (
-          <div className="text-center py-12 border border-dashed rounded-lg">
-            <ImagePlus className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">
-              No photos yet. Listings without photos rarely get bookings.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {media.map((item) => (
-              <div
-                key={item.id}
-                className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border"
-              >
-                <Image
-                  src={item.url}
-                  alt={item.alt_text ?? "Property photo"}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover"
-                />
-                {item.is_featured && (
-                  <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                    <Star className="h-3 w-3 fill-current" />
-                    Cover
-                  </span>
-                )}
-                <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {busyId === item.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  ) : (
-                    <>
-                      {!item.is_featured && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="h-7 px-2"
-                          onClick={() => handleSetFeatured(item)}
-                        >
-                          <Star className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="destructive"
-                        className="h-7 px-2"
-                        onClick={() => handleDelete(item)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </>
+      </div>
+
+      {media.length === 0 ? (
+        <div className="mt-6 rounded-[12px] border border-dashed border-[var(--line-strong)] px-6 py-14 text-center">
+          <ImagePlus className="mx-auto size-6 text-muted-foreground" aria-hidden="true" />
+          <p className="mt-4 text-[14px] font-medium text-ink">No photos yet</p>
+          <p className="mx-auto mt-2 max-w-[46ch] text-[13px] leading-[1.6] text-muted-foreground">
+            Until a photo is added, the listing shows a drawn façade and tells
+            students the photo arrives after the visit.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {media.map((item, index) => {
+            const altId = `alt-${item.id}`;
+            const busy = busyId === item.id;
+
+            return (
+              <li key={item.id}>
+                <div className="relative aspect-[4/3] overflow-hidden rounded-[12px] bg-[var(--paper-warm)]">
+                  <Image
+                    src={item.url}
+                    alt={item.alt_text ?? `Photo ${index + 1}`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    className="object-cover"
+                  />
+                  {item.is_featured && (
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.94)] px-2.5 py-1 text-[11px] font-medium text-ink">
+                      <Star className="size-3 fill-current" aria-hidden="true" />
+                      Cover
+                    </span>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+                {/* Controls sit under the image rather than on hover: an
+                    overlay that only appears on :hover is unreachable by
+                    keyboard and invisible on touch. */}
+                <div className="mt-3">
+                  <label
+                    htmlFor={altId}
+                    className="block text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
+                  >
+                    Describe this photo
+                  </label>
+                  <input
+                    id={altId}
+                    defaultValue={item.alt_text ?? ""}
+                    placeholder="Bedroom, unit 3"
+                    onBlur={(e) => handleAltText(item, e.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-[9px] border border-[var(--line-strong)] bg-card px-3 text-[13px] text-ink outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-[var(--teal-deep)]"
+                  />
+
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSetFeatured(item)}
+                      disabled={busy || item.is_featured}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[9px] border border-[var(--line-strong)] px-3 text-[12.5px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)] disabled:opacity-40"
+                    >
+                      <Star className="size-3.5" aria-hidden="true" />
+                      {item.is_featured ? "Cover photo" : "Make cover"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item)}
+                      disabled={busy}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[9px] px-3 text-[12.5px] font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      Delete
+                    </button>
+
+                    {busy && (
+                      <Loader2
+                        className="size-4 animate-spin text-muted-foreground"
+                        aria-label="Saving"
+                      />
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
