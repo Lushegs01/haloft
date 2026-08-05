@@ -1,22 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  User,
-  Heart,
-  Menu,
-  X,
-  Home,
-  LogIn,
-  Building2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowUpRight, Home, LogOut, Menu, Search, User, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HaloftLogo } from "@/components/ui/logo";
+import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 
 interface HeaderProps {
   campusSlug?: string;
@@ -25,297 +16,310 @@ interface HeaderProps {
 
 export function Header({ campusSlug, campusName }: HeaderProps) {
   const { user, loading } = useAuth();
-  const [scrolled, setScrolled] = useState(false);
+  const [condensed, setCondensed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const reduced = useReducedMotion();
+
+  const searchHref = `/${campusSlug ?? DEFAULT_CAMPUS_SLUG}/search`;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setCondensed(window.scrollY > 16);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close menus on outside click
   useEffect(() => {
-    if (!userMenuOpen) return;
-    const handler = () => setUserMenuOpen(false);
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [userMenuOpen]);
+    if (!accountOpen) return;
+    const onClick = (event: MouseEvent) => {
+      if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) =>
+      event.key === "Escape" && setAccountOpen(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [accountOpen]);
 
-  const initial = user?.email?.[0]?.toUpperCase() ?? "S";
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
 
-  const isActive = (path: string) =>
-    pathname === path || pathname.startsWith(path);
+  const initial = (user?.email?.[0] ?? "S").toUpperCase();
+  const onSearchPage = pathname?.endsWith("/search");
 
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-          scrolled
-            ? "glass shadow-sm shadow-black/5"
-            : "bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50"
+        className={`sticky top-0 z-50 w-full transition-[background-color,border-color,height] duration-300 ${
+          condensed
+            ? "border-b border-[var(--line)] bg-[rgba(247,247,242,0.88)] backdrop-blur-[10px] backdrop-saturate-150"
+            : "border-b border-transparent bg-[var(--background)]"
         }`}
       >
         <div
-          className={`container mx-auto flex items-center justify-between gap-4 px-4 transition-all duration-300 lg:px-8 ${
-            scrolled ? "h-16" : "h-20"
+          className={`shell flex items-center gap-5 transition-[height] duration-300 ${
+            condensed ? "h-[62px]" : "h-[72px]"
           }`}
         >
-          {/* Logo with wordmark */}
           <Link
             href={campusSlug ? `/${campusSlug}` : "/"}
-            className="group flex shrink-0 items-center gap-2"
+            aria-label="Haloft — home"
+            className="shrink-0"
           >
-            <HaloftLogo size={30} className="transition-transform group-hover:scale-105" />
+            <HaloftLogo size={condensed ? 26 : 28} markId="app-header" />
           </Link>
 
-          {/* Centre: pill search bar (campus pages, desktop) */}
-          {campusSlug && (
+          {campusSlug && !onSearchPage && (
             <Link
-              href={`/${campusSlug}/search`}
-              className="group mx-auto hidden max-w-xs flex-1 items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground shadow-sm transition-all hover:border-primary/50 hover:shadow-premium md:flex"
+              href={searchHref}
+              className="group mx-auto hidden h-10 max-w-sm flex-1 items-center gap-2.5 rounded-[10px] border border-[var(--line-strong)] bg-card px-3.5 text-[13.5px] text-muted-foreground transition-colors hover:border-[var(--ink-soft)] md:flex"
             >
-              <Search className="h-4 w-4 shrink-0 transition-colors group-hover:text-primary" />
-              <span className="truncate">Search rooms near {campusName ?? "campus"}</span>
-              <span className="ml-auto shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                Search
+              <Search className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">
+                Search homes near {campusName ?? "campus"}
               </span>
             </Link>
           )}
 
-          {/* Right Actions */}
-          <div className="flex shrink-0 items-center gap-2">
-            {/* Become a host — shown only on landing */}
-            {!campusSlug && (
-              <Link href="/auth/signin" className="hidden md:block">
-                <Button variant="ghost" size="sm" className="gap-1.5 rounded-full text-sm font-medium">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  List your property
-                </Button>
-              </Link>
-            )}
-
-            {/* Campus: search icon for mobile */}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {campusSlug && (
-              <Link href={`/${campusSlug}/search`} className="md:hidden">
-                <Button variant="ghost" size="icon" aria-label="Search">
-                  <Search className="h-5 w-5" />
-                </Button>
+              <Link
+                href={searchHref}
+                className="inline-flex size-10 items-center justify-center rounded-[10px] text-ink transition-colors hover:bg-foreground/[0.05] md:hidden"
+                aria-label="Search homes"
+              >
+                <Search className="size-[19px]" aria-hidden="true" />
               </Link>
             )}
 
-            {/* Auth state */}
-            {!loading && (
-              <>
-                {user ? (
-                  <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setUserMenuOpen(!userMenuOpen);
-                      }}
-                      className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 text-sm font-medium transition-all hover:border-primary/40 hover:shadow-md"
-                    >
-                      <Menu className="hidden h-4 w-4 text-muted-foreground sm:block" />
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
-                        {initial}
-                      </div>
-                    </button>
-
-                    <AnimatePresence>
-                      {userMenuOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                          transition={{ duration: 0.15, ease: "easeOut" }}
-                          className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl shadow-black/10"
-                        >
-                          <div className="border-b border-border px-4 py-3">
-                            <p className="text-sm font-semibold text-foreground">{user.email?.split("@")[0]}</p>
-                            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                          </div>
-                          <div className="p-1.5">
-                            {campusSlug && (
-                              <>
-                                <Link
-                                  href={`/${campusSlug}/dashboard`}
-                                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
-                                  onClick={() => setUserMenuOpen(false)}
-                                >
-                                  <Home className="h-4 w-4 text-muted-foreground" />
-                                  Dashboard
-                                </Link>
-                                <Link
-                                  href={`/${campusSlug}/dashboard`}
-                                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
-                                  onClick={() => setUserMenuOpen(false)}
-                                >
-                                  <Heart className="h-4 w-4 text-muted-foreground" />
-                                  Saved properties
-                                </Link>
-                              </>
-                            )}
-                            <div className="my-1 border-t border-border" />
-                            <form action="/auth/signout" method="post">
-                              <button
-                                type="submit"
-                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/5"
-                              >
-                                <LogIn className="h-4 w-4 rotate-180" />
-                                Sign Out
-                              </button>
-                            </form>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : (
-                  <div className="hidden items-center gap-2 md:flex">
-                    <Link href="/auth/signin">
-                      <Button variant="ghost" size="sm" className="rounded-full font-medium">
-                        Sign in
-                      </Button>
-                    </Link>
-                    <Link href="/auth/signup">
-                      <Button size="sm" className="rounded-full px-5 font-semibold shadow-sm shadow-primary/20">
-                        Sign up
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </>
+            {!loading && !user && (
+              <div className="hidden items-center gap-1.5 md:flex">
+                <Link
+                  href="/auth/signin"
+                  className="rounded-[10px] px-3.5 py-2.5 text-[13.5px] font-medium text-ink-soft transition-colors hover:text-ink"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="group inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-[var(--navy)] pl-4 pr-3.5 text-[13.5px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+                >
+                  Create account
+                  <ArrowUpRight className="size-3.5 arrow-nudge" aria-hidden="true" />
+                </Link>
+              </div>
             )}
 
-            {/* Mobile menu toggle */}
+            {!loading && user && (
+              <div className="relative" ref={accountRef}>
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen((v) => !v)}
+                  aria-expanded={accountOpen}
+                  aria-haspopup="menu"
+                  className="flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line-strong)] pl-2.5 pr-3 transition-colors hover:border-[var(--ink-soft)]"
+                >
+                  <span className="flex size-6 items-center justify-center rounded-full bg-[var(--navy)] text-[11px] font-semibold text-white">
+                    {initial}
+                  </span>
+                  <span className="hidden text-[13px] font-medium text-ink sm:inline">
+                    Account
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {accountOpen && (
+                    <motion.div
+                      role="menu"
+                      initial={reduced ? undefined : { opacity: 0, y: -6 }}
+                      animate={reduced ? undefined : { opacity: 1, y: 0 }}
+                      exit={reduced ? undefined : { opacity: 0, y: -6 }}
+                      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-[12px] border border-[var(--line)] bg-card shadow-lifted"
+                    >
+                      <div className="border-b border-[var(--line)] px-4 py-3">
+                        <p className="truncate text-[13px] font-medium text-ink">
+                          {user.email}
+                        </p>
+                      </div>
+                      <div className="p-1.5">
+                        <Link
+                          href={`/${campusSlug ?? DEFAULT_CAMPUS_SLUG}/dashboard`}
+                          onClick={() => setAccountOpen(false)}
+                          className="flex items-center gap-3 rounded-[9px] px-3 py-2.5 text-[13.5px] text-ink transition-colors hover:bg-foreground/[0.05]"
+                          role="menuitem"
+                        >
+                          <Home className="size-4 text-muted-foreground" aria-hidden="true" />
+                          Bookings &amp; saved homes
+                        </Link>
+                        <form action="/auth/signout" method="post">
+                          <button
+                            type="submit"
+                            className="flex w-full items-center gap-3 rounded-[9px] px-3 py-2.5 text-left text-[13.5px] text-ink transition-colors hover:bg-foreground/[0.05]"
+                            role="menuitem"
+                          >
+                            <LogOut className="size-4 text-muted-foreground" aria-hidden="true" />
+                            Sign out
+                          </button>
+                        </form>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card transition-colors hover:bg-muted md:hidden"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="-mr-2 inline-flex size-10 items-center justify-center rounded-[10px] text-ink md:hidden"
+              aria-label="Open menu"
+              aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+              <Menu className="size-[21px]" aria-hidden="true" />
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile menu */}
+      <AnimatePresence>
         {mobileOpen && (
-          <div className="animate-slide-up border-t border-border bg-background/98 backdrop-blur md:hidden">
-            <div className="container mx-auto space-y-1 px-4 py-4">
-              {campusSlug && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex flex-col bg-[var(--paper)] md:hidden"
+            initial={reduced ? undefined : { opacity: 0, y: -8 }}
+            animate={reduced ? undefined : { opacity: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+          >
+            <div className="shell flex h-[72px] shrink-0 items-center justify-between">
+              <HaloftLogo size={28} markId="app-header-mobile" />
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="-mr-2 inline-flex size-11 items-center justify-center rounded-[10px] text-ink"
+                aria-label="Close menu"
+                autoFocus
+              >
+                <X className="size-[21px]" aria-hidden="true" />
+              </button>
+            </div>
+
+            <nav className="shell flex flex-1 flex-col justify-center gap-1 pb-8" aria-label="Mobile">
+              {[
+                { href: campusSlug ? `/${campusSlug}` : "/", label: "Home" },
+                { href: searchHref, label: "Find a home" },
+                { href: "/#how-it-works", label: "How it works" },
+                { href: "/#for-owners", label: "For property owners" },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="border-b border-[var(--line)] py-5 text-[24px] font-medium tracking-[-0.03em] text-ink"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="shell flex flex-col gap-3 pb-[max(28px,env(safe-area-inset-bottom))]">
+              {user ? (
                 <>
                   <Link
-                    href={`/${campusSlug}`}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                    href={`/${campusSlug ?? DEFAULT_CAMPUS_SLUG}/dashboard`}
                     onClick={() => setMobileOpen(false)}
+                    className="inline-flex h-14 items-center justify-center rounded-[10px] bg-[var(--navy)] text-[15px] font-semibold text-white"
                   >
-                    <Home className="h-4 w-4 text-muted-foreground" />
-                    Home
+                    Bookings &amp; saved homes
+                  </Link>
+                  <form action="/auth/signout" method="post">
+                    <button
+                      type="submit"
+                      className="inline-flex h-14 w-full items-center justify-center rounded-[10px] border border-[var(--line-strong)] text-[15px] font-medium text-ink"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setMobileOpen(false)}
+                    className="inline-flex h-14 items-center justify-center rounded-[10px] bg-[var(--navy)] text-[15px] font-semibold text-white"
+                  >
+                    Create account
                   </Link>
                   <Link
-                    href={`/${campusSlug}/search`}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                    href="/auth/signin"
                     onClick={() => setMobileOpen(false)}
+                    className="inline-flex h-14 items-center justify-center rounded-[10px] border border-[var(--line-strong)] text-[15px] font-medium text-ink"
                   >
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    Search Properties
+                    Sign in
                   </Link>
                 </>
               )}
-              <div className="border-t border-border pt-2">
-                {user ? (
-                  <>
-                    {campusSlug && (
-                      <Link
-                        href={`/${campusSlug}/dashboard`}
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        Dashboard
-                      </Link>
-                    )}
-                    <form action="/auth/signout" method="post">
-                      <button
-                        type="submit"
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
-                      >
-                        <LogIn className="h-4 w-4 rotate-180" />
-                        Sign Out
-                      </button>
-                    </form>
-                  </>
-                ) : (
-                  <div className="flex gap-3 px-4 py-2">
-                    <Link href="/auth/signin" className="flex-1" onClick={() => setMobileOpen(false)}>
-                      <Button variant="outline" className="w-full rounded-full">Sign in</Button>
-                    </Link>
-                    <Link href="/auth/signup" className="flex-1" onClick={() => setMobileOpen(false)}>
-                      <Button className="w-full rounded-full">Sign up</Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
+          </motion.div>
         )}
-      </header>
+      </AnimatePresence>
 
-      {/* Mobile bottom nav (campus pages only) */}
+      {/* Campus pages keep a bottom bar on small screens — three
+          destinations, each a distinct place to be. */}
       {campusSlug && (
-        <nav className="glass safe-area-pb fixed bottom-0 left-0 right-0 z-40 border-t border-border md:hidden">
-          <div className="flex h-16 items-center justify-around px-2">
-            <Link
-              href={`/${campusSlug}`}
-              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
-            >
-              <Home className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}`) && !isActive(`/${campusSlug}/search`) && !isActive(`/${campusSlug}/dashboard`) ? "fill-current text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
-              <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}`) && !isActive(`/${campusSlug}/search`) && !isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
-                Home
-              </span>
-              {isActive(`/${campusSlug}`) && !isActive(`/${campusSlug}/search`) && !isActive(`/${campusSlug}/dashboard`) && (
-                <span className="absolute top-1 h-1 w-1 rounded-full bg-primary" />
-              )}
-            </Link>
-            <Link
-              href={`/${campusSlug}/search`}
-              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
-            >
-              <Search className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/search`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
-              <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}/search`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
-                Search
-              </span>
-              {isActive(`/${campusSlug}/search`) && (
-                <span className="absolute top-1 h-1 w-1 rounded-full bg-primary" />
-              )}
-            </Link>
-            <Link
-              href={user ? `/${campusSlug}/dashboard` : "/auth/signin"}
-              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
-            >
-              <Heart className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "fill-current text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
-              <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
-                Saved
-              </span>
-              {isActive(`/${campusSlug}/dashboard`) && (
-                <span className="absolute top-1 h-1 w-1 rounded-full bg-primary" />
-              )}
-            </Link>
-            <Link
-              href={user ? `/${campusSlug}/dashboard` : "/auth/signin"}
-              className="group relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors hover:bg-muted"
-            >
-              <User className={`h-5 w-5 transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
-              <span className={`text-[10px] font-medium transition-colors ${isActive(`/${campusSlug}/dashboard`) ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`}>
-                Profile
-              </span>
-              {isActive(`/${campusSlug}/dashboard`) && (
-                <span className="absolute top-1 h-1 w-1 rounded-full bg-primary" />
-              )}
-            </Link>
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--line)] bg-[rgba(247,247,242,0.94)] backdrop-blur-[10px] pb-[env(safe-area-inset-bottom)] md:hidden"
+          aria-label="Quick navigation"
+        >
+          <div className="flex h-16 items-stretch">
+            {[
+              { href: `/${campusSlug}`, label: "Home", icon: Home, match: (p: string) => p === `/${campusSlug}` },
+              { href: `/${campusSlug}/search`, label: "Search", icon: Search, match: (p: string) => p.startsWith(`/${campusSlug}/search`) },
+              {
+                href: user ? `/${campusSlug}/dashboard` : "/auth/signin",
+                label: user ? "Account" : "Sign in",
+                icon: User,
+                match: (p: string) => p.startsWith(`/${campusSlug}/dashboard`),
+              },
+            ].map((item) => {
+              const active = pathname ? item.match(pathname) : false;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors ${
+                    active ? "text-ink" : "text-muted-foreground"
+                  }`}
+                >
+                  <item.icon className="size-[19px]" aria-hidden="true" />
+                  {item.label}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute top-0 h-0.5 w-10 rounded-full transition-opacity ${
+                      active ? "bg-[var(--teal-deep)] opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </Link>
+              );
+            })}
           </div>
         </nav>
       )}

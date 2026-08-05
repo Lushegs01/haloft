@@ -1,48 +1,57 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { Elevation } from "./elevation";
+import { Reveal, MaskReveal } from "./motion";
 
-export function FinalCta() {
+export function FinalCta({ campusSlug }: { campusSlug: string }) {
   return (
-    <section className="relative overflow-hidden bg-night text-night-foreground">
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-dots-light opacity-25" />
-        <div className="orb -top-32 left-1/2 size-[420px] -translate-x-1/2 bg-teal/20" />
-      </div>
+    <section className="relative bg-[var(--navy)] text-white">
+      <div className="shell py-20 lg:py-28">
+        <div className="grid grid-cols-12 items-center gap-y-12 lg:gap-x-12">
+          <div className="col-span-12 lg:col-span-7">
+            <Reveal>
+              <h2 className="display-2 max-w-[16ch] text-white">
+                Your next place might be closer than you{" "}
+                <span className="editorial font-normal text-[#7fd4c6]">think</span>.
+              </h2>
+            </Reveal>
 
-      <div className="relative mx-auto max-w-4xl px-4 py-24 text-center sm:px-6 lg:px-8 lg:py-32">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-white/10 text-teal">
-          <ShieldCheck className="size-7" aria-hidden="true" />
+            <Reveal delay={0.08}>
+              <p className="mt-6 max-w-[42ch] text-[15.5px] leading-[1.65] text-white/65">
+                Explore student accommodation around your university — priced,
+                placed and described before you leave the house.
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.14}>
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <Link
+                  href={`/${campusSlug}/search`}
+                  className="group inline-flex h-14 items-center justify-center gap-2 rounded-[10px] bg-white px-7 text-[15px] font-semibold text-[var(--navy)] transition-colors hover:bg-[#f0f2ef]"
+                >
+                  Find a place
+                  <ArrowRight className="size-4 arrow-nudge" aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/#for-owners"
+                  className="group inline-flex h-14 items-center justify-center gap-2 rounded-[10px] border border-white/25 px-7 text-[15px] font-medium text-white transition-colors hover:border-white/55"
+                >
+                  List a property
+                  <ArrowUpRight className="size-4 arrow-nudge" aria-hidden="true" />
+                </Link>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* The image breaks the top boundary of the band on purpose */}
+          <div className="col-span-12 lg:col-span-5">
+            <MaskReveal className="lg:-mt-44 xl:-mt-52">
+              <figure className="relative aspect-[16/10] overflow-hidden rounded-[18px] ring-1 ring-white/10 sm:aspect-[16/9] lg:aspect-[4/5]">
+                <Elevation variant="tower" />
+              </figure>
+            </MaskReveal>
+          </div>
         </div>
-
-        <h2 className="mt-6 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">
-          Your next room should be the
-          <span className="text-coral"> least stressful part</span> of university
-        </h2>
-
-        <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-night-foreground/75 sm:text-lg">
-          Stop gambling deposits on phone numbers. Find a verified room near
-          your campus, pay securely, and move in with your sanity intact.
-        </p>
-
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href="/auth/signup"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-bold text-primary-foreground transition-all hover:brightness-110 sm:w-auto"
-          >
-            Create a free account
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
-          <Link
-            href="#universities"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-8 py-4 text-sm font-bold text-white transition-colors hover:border-white/40 sm:w-auto"
-          >
-            Browse your campus
-          </Link>
-        </div>
-
-        <p className="mt-6 text-xs text-night-foreground/50">
-          Free to search · Free to request rooms · Pay only when it&apos;s confirmed
-        </p>
       </div>
     </section>
   );

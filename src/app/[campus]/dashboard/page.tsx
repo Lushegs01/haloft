@@ -1,29 +1,58 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Home,
-  Calendar,
-  Heart,
-  Star,
   ArrowRight,
-  Clock,
+  Check,
   CheckCircle2,
-  XCircle,
+  Clock,
   RefreshCw,
-  Phone,
-  Mail,
-  User,
-  Building2,
-  TrendingUp,
-  MapPin,
+  Star,
+  XCircle,
 } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { formatNaira } from "@/components/haloft/format";
 import { CancelBookingButton } from "./cancel-booking-button";
 import { PayNowButton } from "./pay-now-button";
 import { ReviewDialog } from "./review-dialog";
+
+const STATUS: Record<
+  string,
+  { label: string; className: string; icon: typeof Clock }
+> = {
+  pending: {
+    label: "Awaiting confirmation",
+    className: "border-[var(--line-strong)] text-muted-foreground",
+    icon: Clock,
+  },
+  confirmed: {
+    label: "Confirmed",
+    className: "border-[var(--teal-deep)]/35 bg-[var(--teal-tint)] text-[var(--teal-deep)]",
+    icon: CheckCircle2,
+  },
+  cancelled: {
+    label: "Cancelled",
+    className: "border-[var(--line-strong)] text-muted-foreground",
+    icon: XCircle,
+  },
+  completed: {
+    label: "Stay completed",
+    className: "border-[var(--line-strong)] text-ink",
+    icon: Check,
+  },
+  refunded: {
+    label: "Refunded",
+    className: "border-[var(--line-strong)] text-muted-foreground",
+    icon: RefreshCw,
+  },
+};
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default async function StudentDashboardPage({
   params,
@@ -56,7 +85,9 @@ export default async function StudentDashboardPage({
 
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("*, rooms(name, price_per_month), properties(title, slug, campus_id), payments(id, status)")
+    .select(
+      "*, rooms(name, price_per_month), properties(title, slug, campus_id), payments(id, status)"
+    )
     .eq("student_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -77,347 +108,260 @@ export default async function StudentDashboardPage({
     .order("created_at", { ascending: false })
     .limit(5);
 
-  const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-    pending: {
-      color: "bg-amber/10 text-amber border-amber/20",
-      icon: <Clock className="h-3 w-3" />,
-      label: "Pending",
-    },
-    confirmed: {
-      color: "bg-success/10 text-success border-success/20",
-      icon: <CheckCircle2 className="h-3 w-3" />,
-      label: "Confirmed",
-    },
-    cancelled: {
-      color: "bg-destructive/10 text-destructive border-destructive/20",
-      icon: <XCircle className="h-3 w-3" />,
-      label: "Cancelled",
-    },
-    completed: {
-      color: "bg-teal/10 text-teal border-teal/20",
-      icon: <CheckCircle2 className="h-3 w-3" />,
-      label: "Completed",
-    },
-    refunded: {
-      color: "bg-muted text-muted-foreground border-border",
-      icon: <RefreshCw className="h-3 w-3" />,
-      label: "Refunded",
-    },
-  };
-
-  const reviewedBookingIds = new Set(
-    (reviews ?? []).map((r) => r.booking_id)
-  );
-
-  const firstName = profile.full_name?.split(" ")[0] ?? "Student";
-  const initial = (profile.full_name?.[0] ?? user.email?.[0] ?? "S").toUpperCase();
-
-  const statsItems = [
-    { label: "Bookings", value: bookings?.length ?? 0, icon: Calendar, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Saved", value: favorites?.length ?? 0, icon: Heart, color: "text-rose", bg: "bg-rose/10" },
-    { label: "Reviews", value: reviews?.length ?? 0, icon: Star, color: "text-amber", bg: "bg-amber/10" },
-  ];
+  const reviewedBookingIds = new Set((reviews ?? []).map((r) => r.booking_id));
+  const firstName = profile.full_name?.split(" ")[0] ?? "there";
 
   return (
-    <div className="min-h-full bg-muted/20 pb-20 md:pb-0">
-      {/* ── Profile Hero ──────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-primary/8 via-background to-background border-b border-border">
-        <div className="container mx-auto px-4 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            {/* Avatar */}
-            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-primary/30 shrink-0">
-              {initial}
+    <div className="pb-28 md:pb-0">
+      {/* ── Header ────────────────────────────────────────── */}
+      <div className="hairline-b bg-[var(--paper)]">
+        <div className="shell py-10 lg:py-14">
+          <p className="label label-rule max-w-[14rem]">Your account</p>
+          <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="display-2 text-ink">Hello, {firstName}.</h1>
+              <p className="mt-2.5 text-[14px] text-muted-foreground">{user.email}</p>
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
-              <h1 className="text-2xl font-extrabold text-foreground mt-0.5 heading-display">
-                {profile.full_name ?? "Student"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
-            </div>
-            <Link href={`/${campus}/search`}>
-              <Button size="sm" className="rounded-full gap-2 shadow-sm shrink-0">
-                <Home className="h-4 w-4" />
-                Find rooms
-              </Button>
+            <Link
+              href={`/${campus}/search`}
+              className="group inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-[10px] bg-[var(--navy)] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)] sm:self-auto"
+            >
+              Find another home
+              <ArrowRight className="size-4 arrow-nudge" aria-hidden="true" />
             </Link>
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
-            {statsItems.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-border bg-card p-4 text-center shadow-sm">
-                <div className={`h-9 w-9 rounded-xl ${s.bg} flex items-center justify-center mx-auto mb-2`}>
-                  <s.icon className={`h-4.5 w-4.5 ${s.color}`} />
-                </div>
-                <p className="text-2xl font-bold text-foreground heading-display">
-                  {s.value}
-                </p>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">{s.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 py-8">
+      <div className="shell py-10 lg:py-14">
         {paymentOutcome === "success" && (
-          <div className="mb-6 rounded-2xl border border-success/30 bg-success/10 px-5 py-4 flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
-            <div>
-              <p className="font-semibold text-foreground text-sm">Payment received — your room is secured!</p>
-              <p className="text-sm text-muted-foreground">A receipt was sent to your email by Paystack.</p>
-            </div>
+          <div className="mb-10 rounded-[12px] border border-[var(--teal-deep)]/35 bg-[var(--teal-tint)] px-5 py-4">
+            <p className="text-[14px] font-medium text-ink">
+              Payment received — the room is yours.
+            </p>
+            <p className="mt-1 text-[13px] text-ink-soft">
+              Paystack has emailed you a receipt.
+            </p>
           </div>
         )}
         {paymentOutcome === "failed" && (
-          <div className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-4 flex items-center gap-3">
-            <XCircle className="h-5 w-5 text-destructive shrink-0" />
-            <div>
-              <p className="font-semibold text-foreground text-sm">Payment not completed</p>
-              <p className="text-sm text-muted-foreground">
-                You were not charged, or the charge could not be confirmed. Try again, or contact us if you were debited.
-              </p>
-            </div>
+          <div className="mb-10 rounded-[12px] border border-destructive/30 bg-destructive/5 px-5 py-4">
+            <p className="text-[14px] font-medium text-ink">
+              That payment didn&apos;t complete
+            </p>
+            <p className="mt-1 max-w-[62ch] text-[13px] text-ink-soft">
+              You were not charged, or the charge could not be confirmed. Try
+              again below — and tell us if money left your account.
+            </p>
           </div>
         )}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Main: Bookings + Reviews ──────────────────── */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-12 gap-y-14 lg:gap-x-14">
+          {/* ── Requests ──────────────────────────────────── */}
+          <section className="col-span-12 lg:col-span-8">
+            <h2 className="display-3 text-ink">Room requests</h2>
 
-            {/* Bookings */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-primary" />
-                  </div>
-                  <h2 className="font-bold text-foreground heading-display">
-                    My Bookings
-                  </h2>
-                </div>
-                <Link href={`/${campus}/search`}>
-                  <Button size="sm" variant="ghost" className="text-primary hover:text-primary gap-1 text-sm font-medium">
-                    Find room <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
+            {bookings && bookings.length > 0 ? (
+              <ul className="mt-7 border-t border-[var(--line)]">
+                {bookings.map((booking) => {
+                  const status = STATUS[booking.status] ?? STATUS.pending;
+                  const StatusIcon = status.icon;
+                  const isPaid = booking.payments?.some(
+                    (p) => p.status === "success"
+                  );
+                  const canReview =
+                    booking.status === "completed" &&
+                    !reviewedBookingIds.has(booking.id);
+
+                  return (
+                    <li
+                      key={booking.id}
+                      className="border-b border-[var(--line)] py-6"
+                    >
+                      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                            <h3 className="text-[16px] font-semibold tracking-[-0.02em] text-ink">
+                              {booking.properties?.title ?? "Home"}
+                            </h3>
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${status.className}`}
+                            >
+                              <StatusIcon className="size-3" aria-hidden="true" />
+                              {status.label}
+                            </span>
+                            {isPaid && (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--teal-deep)]/35 bg-[var(--teal-tint)] px-2.5 py-1 text-[11px] font-medium text-[var(--teal-deep)]">
+                                <Check className="size-3" aria-hidden="true" />
+                                Paid
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="mt-2 text-[13.5px] text-muted-foreground">
+                            {booking.rooms?.name ?? "Room"} ·{" "}
+                            {formatDate(booking.check_in_date)} —{" "}
+                            {formatDate(booking.check_out_date)}
+                          </p>
+                          <p className="mt-1.5 text-[13.5px] text-ink tabular">
+                            {formatNaira(Number(booking.total_amount ?? 0))} total
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
+                          {booking.status === "confirmed" && !isPaid && (
+                            <PayNowButton
+                              bookingId={booking.id}
+                              campusSlug={campus}
+                              amount={Number(booking.total_amount)}
+                            />
+                          )}
+                          {(booking.status === "pending" ||
+                            (booking.status === "confirmed" && !isPaid)) && (
+                            <CancelBookingButton
+                              bookingId={booking.id}
+                              campusSlug={campus}
+                            />
+                          )}
+                          {canReview && (
+                            <ReviewDialog
+                              bookingId={booking.id}
+                              campusSlug={campus}
+                              propertyTitle={booking.properties?.title ?? "this home"}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="mt-7 rounded-[14px] border border-dashed border-[var(--line-strong)] px-6 py-14 text-center">
+                <p className="text-[15px] font-medium text-ink">
+                  You haven&apos;t requested a room yet
+                </p>
+                <p className="mx-auto mt-2 max-w-[44ch] text-[13.5px] text-muted-foreground">
+                  When you find a place you like, ask for it here. Nothing is
+                  charged until a booking is confirmed.
+                </p>
+                <Link
+                  href={`/${campus}/search`}
+                  className="mt-6 inline-flex h-11 items-center rounded-[10px] border border-[var(--line-strong)] px-5 text-[13.5px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)]"
+                >
+                  Browse homes near campus
                 </Link>
               </div>
+            )}
 
-              <div className="p-5">
-                {bookings && bookings.length > 0 ? (
-                  <div className="space-y-3">
-                    {bookings.map((booking) => {
-                      const s = statusConfig[booking.status] ?? statusConfig.pending;
-                      const isPaid = booking.payments?.some((p) => p.status === "success");
-                      const canReview =
-                        booking.status === "completed" &&
-                        !reviewedBookingIds.has(booking.id);
-                      return (
-                        <div
-                          key={booking.id}
-                          className="rounded-xl border border-border bg-muted/20 p-4 hover:bg-muted/40 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold text-foreground truncate">
-                                  {booking.properties?.title ?? "Property"}
-                                </p>
-                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${s.color}`}>
-                                  {s.icon}
-                                  {s.label}
-                                </span>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                Room: {booking.rooms?.name ?? "N/A"}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(booking.check_in_date).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric" })}
-                                {" — "}
-                                {new Date(booking.check_out_date).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric" })}
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-2 shrink-0">
-                              {isPaid && (
-                                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold border bg-success/10 text-success border-success/20">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  Paid
-                                </span>
-                              )}
-                              {booking.status === "confirmed" && !isPaid && (
-                                <PayNowButton
-                                  bookingId={booking.id}
-                                  campusSlug={campus}
-                                  amount={Number(booking.total_amount)}
-                                />
-                              )}
-                              {(booking.status === "pending" ||
-                                (booking.status === "confirmed" && !isPaid)) && (
-                                <CancelBookingButton bookingId={booking.id} campusSlug={campus} />
-                              )}
-                              {canReview && (
-                                <ReviewDialog
-                                  bookingId={booking.id}
-                                  campusSlug={campus}
-                                  propertyTitle={booking.properties?.title ?? "Property"}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Home className="h-7 w-7 text-muted-foreground/50" />
-                    </div>
-                    <p className="font-semibold text-foreground mb-1">No bookings yet</p>
-                    <p className="text-sm text-muted-foreground mb-4">Find your perfect room and make your first booking.</p>
-                    <Link href={`/${campus}/search`}>
-                      <Button size="sm" className="rounded-full">Find accommodation</Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* ── Reviews ─────────────────────────────────── */}
+            <div className="mt-14">
+              <h2 className="display-3 text-ink">Reviews you&apos;ve written</h2>
 
-            {/* Reviews */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-                <div className="h-8 w-8 rounded-xl bg-amber/10 flex items-center justify-center">
-                  <Star className="h-4 w-4 text-amber" />
-                </div>
-                <h2 className="font-bold text-foreground heading-display">
-                  My Reviews
-                </h2>
-              </div>
-              <div className="p-5">
-                {reviews && reviews.length > 0 ? (
-                  <div className="space-y-3">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="rounded-xl border border-border bg-muted/20 p-4">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <p className="font-semibold text-foreground text-sm">
-                            {review.properties?.title ?? "Property"}
-                          </p>
-                          <div className="flex gap-0.5 shrink-0">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-3.5 w-3.5 ${i < review.overall_rating ? "fill-amber text-amber" : "text-muted-foreground/20"}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+              {reviews && reviews.length > 0 ? (
+                <ul className="mt-7 border-t border-[var(--line)]">
+                  {reviews.map((review) => (
+                    <li key={review.id} className="border-b border-[var(--line)] py-6">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <p className="text-[15px] font-semibold text-ink">
+                          {review.properties?.title ?? "Home"}
+                        </p>
+                        <span className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`size-3.5 ${
+                                i < review.overall_rating
+                                  ? "fill-current text-[var(--sand-deep)]"
+                                  : "text-[var(--line-strong)]"
+                              }`}
+                              aria-hidden="true"
+                            />
+                          ))}
+                          <span className="sr-only">
+                            {review.overall_rating} out of 5
+                          </span>
+                        </span>
                         {!review.is_approved && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber/10 text-amber border border-amber/20 px-2.5 py-1 text-xs font-medium mt-2">
-                            <Clock className="h-3 w-3" />
-                            Pending approval
+                          <span className="rounded-full border border-[var(--line-strong)] px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                            Awaiting approval
                           </span>
                         )}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10">
-                    <Star className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground font-medium">No reviews yet</p>
-                    <p className="text-xs text-muted-foreground mt-1">Reviews appear here after your completed stays.</p>
+                      {review.comment && (
+                        <p className="mt-2.5 max-w-[62ch] text-[13.5px] leading-[1.65] text-muted-foreground">
+                          {review.comment}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-5 max-w-[52ch] text-[13.5px] leading-[1.65] text-muted-foreground">
+                  Once a stay is complete you can review the place. We only
+                  publish reviews from students who actually stayed there.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* ── Saved ─────────────────────────────────────── */}
+          <aside className="col-span-12 lg:col-span-4">
+            <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Saved homes
+            </h2>
+
+            {favorites && favorites.length > 0 ? (
+              <ul className="mt-4 border-t border-[var(--line)]">
+                {favorites.map((fav) => (
+                  <li key={fav.id} className="border-b border-[var(--line)]">
+                    <Link
+                      href={`/${campus}/property/${fav.properties?.slug}`}
+                      className="group flex items-start justify-between gap-4 py-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-medium text-ink">
+                          {fav.properties?.title}
+                        </p>
+                        <p className="mt-1 truncate text-[12.5px] text-muted-foreground">
+                          {fav.properties?.address}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-[13px] font-medium text-ink tabular">
+                        {formatNaira(Number(fav.properties?.min_price ?? 0))}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 max-w-[36ch] border-t border-[var(--line)] pt-4 text-[13px] leading-[1.6] text-muted-foreground">
+                Nothing saved yet. Homes you save while browsing show up here.
+              </p>
+            )}
+
+            <div className="mt-10 border-t border-[var(--line)] pt-6">
+              <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Your details
+              </h2>
+              <dl className="mt-4 space-y-2.5 text-[13px]">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">Name</dt>
+                  <dd className="text-ink">{profile.full_name ?? "—"}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">Email</dt>
+                  <dd className="truncate text-ink">{user.email}</dd>
+                </div>
+                {profile.phone && (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-muted-foreground">Phone</dt>
+                    <dd className="text-ink tabular">{profile.phone}</dd>
                   </div>
                 )}
-              </div>
+              </dl>
             </div>
-          </div>
-
-          {/* ── Sidebar: Profile + Favorites ────────────── */}
-          <div className="space-y-6">
-
-            {/* Profile card */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-                <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <h2 className="font-bold text-foreground heading-display">
-                  Profile
-                </h2>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-white font-bold text-lg shrink-0">
-                    {initial}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-foreground truncate">{profile.full_name ?? "Student"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-border space-y-2">
-                  {profile.phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5 shrink-0" />
-                      {profile.phone}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{user.email}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Saved Properties — card grid */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-                <div className="h-8 w-8 rounded-xl bg-rose/10 flex items-center justify-center">
-                  <Heart className="h-4 w-4 text-rose" />
-                </div>
-                <h2 className="font-bold text-foreground heading-display">
-                  Saved Properties
-                </h2>
-              </div>
-              <div className="p-4">
-                {favorites && favorites.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-3">
-                    {favorites.map((fav) => (
-                      <Link
-                        key={fav.id}
-                        href={`/${campus}/property/${fav.properties?.slug}`}
-                        className="flex items-center gap-3 rounded-xl p-3 hover:bg-muted transition-colors group"
-                      >
-                        <div className="relative h-14 w-14 rounded-xl bg-muted overflow-hidden shrink-0">
-                          <div className="flex items-center justify-center h-full">
-                            <Home className="h-5 w-5 text-muted-foreground/40" />
-                          </div>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
-                            {fav.properties?.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            From ₦{fav.properties?.min_price?.toLocaleString() ?? "N/A"}/mo
-                          </p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Heart className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground font-medium">No saved properties</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Tap the heart icon on any listing to save it.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          </aside>
         </div>
       </div>
     </div>

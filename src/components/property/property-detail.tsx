@@ -2,60 +2,83 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
-  Building2,
-  MapPin,
-  Star,
-  BedDouble,
-  Bath,
-  Wifi,
-  Shield,
-  Droplets,
-  Car,
-  WashingMachine,
-  Fan,
-  Zap,
-  Flame,
-  Dumbbell,
   ArrowLeft,
-  Heart,
-  Share2,
-  CheckCircle2,
-  Calendar,
-  User,
-  X,
+  ArrowRight,
+  BadgeCheck,
+  Bath,
+  Car,
+  Check,
   ChevronLeft,
   ChevronRight,
-  Grid3x3,
+  Dumbbell,
+  Fan,
+  Flag,
+  Flame,
+  Footprints,
+  Grid2x2,
+  Share2,
+  Shield,
+  Sofa,
+  Star,
+  WashingMachine,
+  Wifi,
+  X,
+  Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Elevation } from "@/components/haloft/elevation";
+import { formatNaira, propertyTypeLabel } from "@/components/haloft/format";
+import { CONTACT_EMAIL } from "@/lib/constants";
+import { walkMinutes } from "@/lib/utils";
 import type { PropertyListing, RoomListing } from "@/types/database";
 
-const amenityIcons: Record<string, React.ReactNode> = {
-  wifi: <Wifi className="h-4 w-4" />,
-  "24_7_power": <Zap className="h-4 w-4" />,
-  generator: <Zap className="h-4 w-4" />,
-  security: <Shield className="h-4 w-4" />,
-  kitchen: <Flame className="h-4 w-4" />,
-  laundry: <WashingMachine className="h-4 w-4" />,
-  parking: <Car className="h-4 w-4" />,
-  study_room: <Building2 className="h-4 w-4" />,
-  water_heater: <Droplets className="h-4 w-4" />,
-  ac: <Fan className="h-4 w-4" />,
-  gym: <Dumbbell className="h-4 w-4" />,
-  en_suite: <Bath className="h-4 w-4" />,
-  wardrobe: <CheckCircle2 className="h-4 w-4" />,
-  reading_table: <CheckCircle2 className="h-4 w-4" />,
-  balcony: <CheckCircle2 className="h-4 w-4" />,
-  tv: <CheckCircle2 className="h-4 w-4" />,
-  mini_fridge: <CheckCircle2 className="h-4 w-4" />,
+const AMENITY_ICONS: Record<string, typeof Wifi> = {
+  wifi: Wifi,
+  "24_7_power": Zap,
+  generator: Zap,
+  security: Shield,
+  kitchen: Flame,
+  laundry: WashingMachine,
+  parking: Car,
+  water_heater: Bath,
+  ac: Fan,
+  gym: Dumbbell,
+  en_suite: Bath,
+  wardrobe: Sofa,
+  reading_table: Sofa,
+  balcony: Sofa,
+  tv: Sofa,
+  mini_fridge: Sofa,
 };
 
-function formatAmenityLabel(key: string): string {
-  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const AMENITY_LABELS: Record<string, string> = {
+  wifi: "Wi-Fi",
+  "24_7_power": "24/7 power",
+  generator: "Generator",
+  security: "Security",
+  kitchen: "Kitchen",
+  laundry: "Laundry",
+  parking: "Parking",
+  water_heater: "Running water",
+  ac: "Air conditioning",
+  gym: "Gym",
+  en_suite: "En-suite bathroom",
+  wardrobe: "Wardrobe",
+  reading_table: "Reading table",
+  balcony: "Balcony",
+  tv: "TV",
+  mini_fridge: "Mini fridge",
+  study_room: "Study room",
+  fan: "Fan",
+};
+
+function amenityLabel(key: string): string {
+  return (
+    AMENITY_LABELS[key] ??
+    key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase())
+  );
 }
 
 interface PropertyDetailPageProps {
@@ -70,6 +93,9 @@ interface PropertyDetailPageProps {
     profiles: { full_name: string | null; avatar_url: string | null } | null;
   }>;
   campusSlug: string;
+  campusName?: string;
+  campusLat?: number | null;
+  campusLng?: number | null;
 }
 
 export function PropertyDetailPage({
@@ -78,572 +104,621 @@ export function PropertyDetailPage({
   media,
   reviews,
   campusSlug,
+  campusName,
+  campusLat,
+  campusLng,
 }: PropertyDetailPageProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [aboutExpanded, setAboutExpanded] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const reduced = useReducedMotion();
 
   const avgRating = property.avg_rating ?? 0;
   const reviewCount = property.review_count ?? 0;
+  const title = property.title ?? "Student home";
+  const amenities = property.amenities ?? [];
+  const rules = property.rules ?? [];
+  const description = property.description ?? "";
+  const descriptionIsLong = description.length > 420;
 
-  const openLightbox = (idx: number) => {
-    setLightboxIndex(idx);
-    setLightboxOpen(true);
-  };
+  const minutes =
+    campusLat != null &&
+    campusLng != null &&
+    property.latitude != null &&
+    property.longitude != null
+      ? walkMinutes(
+          Number(property.latitude),
+          Number(property.longitude),
+          Number(campusLat),
+          Number(campusLng)
+        )
+      : null;
 
-  const closeLightbox = () => setLightboxOpen(false);
+  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
+  const prevImage = useCallback(
+    () => setLightboxIndex((i) => (i - 1 + media.length) % media.length),
+    [media.length]
+  );
+  const nextImage = useCallback(
+    () => setLightboxIndex((i) => (i + 1) % media.length),
+    [media.length]
+  );
 
-  const prevImage = useCallback(() => {
-    setLightboxIndex((i) => (i - 1 + media.length) % media.length);
-  }, [media.length]);
-
-  const nextImage = useCallback(() => {
-    setLightboxIndex((i) => (i + 1) % media.length);
-  }, [media.length]);
-
-  // Keyboard navigation for lightbox
   useEffect(() => {
     if (!lightboxOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") prevImage();
       if (e.key === "ArrowRight") nextImage();
       if (e.key === "Escape") closeLightbox();
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [lightboxOpen, prevImage, nextImage]);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", handler);
+    };
+  }, [lightboxOpen, prevImage, nextImage, closeLightbox]);
 
-  const aboutText = property.description ?? "No description available.";
-  const aboutLong = aboutText.length > 200;
+  async function share() {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        /* the user dismissed the sheet — fall through to copying */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareState("copied");
+      setTimeout(() => setShareState("idle"), 2200);
+    } catch {
+      /* clipboard unavailable — nothing sensible left to do */
+    }
+  }
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
 
   return (
-    <div className="flex flex-col min-h-full pb-16 md:pb-0">
+    <div className="pb-28 md:pb-0">
+      {/* ── Breadcrumb ─────────────────────────────────────── */}
+      <div className="hairline-b bg-[var(--paper)]">
+        <div className="shell flex items-center justify-between gap-4 py-3.5">
+          <Link
+            href={`/${campusSlug}/search`}
+            className="group inline-flex items-center gap-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:text-ink"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">
+              Homes near {campusName ?? "campus"}
+            </span>
+            <span className="sm:hidden">Back</span>
+          </Link>
 
-      {/* ── Breadcrumb + Actions ───────────────────────────── */}
-      <div className="border-b border-border bg-background">
-        <div className="container mx-auto px-4 lg:px-8 py-3">
-          <div className="flex items-center justify-between">
-            <Link
-              href={`/${campusSlug}/search`}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted px-3 py-1.5 -ml-3"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to search
-            </Link>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all hover:bg-muted ${
-                  isFavorite
-                    ? "text-primary border-primary/30 bg-primary/5"
-                    : "text-foreground border-border"
-                }`}
-              >
-                <Heart className={`h-4 w-4 ${isFavorite ? "fill-primary text-primary" : ""}`} />
-                <span className="hidden sm:inline">{isFavorite ? "Saved" : "Save"}</span>
-              </button>
-              <button className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium border border-border text-foreground hover:bg-muted transition-all">
-                <Share2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={share}
+            className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-[var(--line-strong)] px-3 text-[13px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)]"
+          >
+            <Share2 className="size-3.5" aria-hidden="true" />
+            {shareState === "copied" ? "Link copied" : "Share"}
+          </button>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 py-6">
-
-        {/* ── Gallery ───────────────────────────────────────── */}
+      <div className="shell pt-6 lg:pt-8">
+        {/* ── Gallery ──────────────────────────────────────── */}
         {media.length > 0 ? (
-          <div className="relative mb-8">
-            {/* Desktop: photo grid */}
-            <div className="hidden lg:block photo-grid">
-              {/* Main large image */}
+          <>
+            <div className="hidden grid-cols-4 grid-rows-2 gap-1.5 overflow-hidden rounded-[18px] lg:grid lg:h-[clamp(340px,38vw,460px)]">
               <button
-                className="relative bg-muted hover:opacity-95 transition-opacity cursor-zoom-in overflow-hidden"
+                type="button"
                 onClick={() => openLightbox(0)}
+                className="relative col-span-2 row-span-2 cursor-zoom-in bg-[var(--paper-warm)]"
               >
-                {media[0] && (
-                  <Image
-                    src={media[0].url}
-                    alt={media[0].alt_text ?? property.title ?? "Property"}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="50vw"
-                  />
-                )}
+                <Image
+                  src={media[0].url}
+                  alt={media[0].alt_text ?? title}
+                  fill
+                  priority
+                  className="object-cover transition-opacity hover:opacity-95"
+                  sizes="50vw"
+                />
               </button>
-              {/* 4 smaller images */}
               {media.slice(1, 5).map((m, i) => (
                 <button
-                  key={i}
+                  key={m.url}
+                  type="button"
                   onClick={() => openLightbox(i + 1)}
-                  className="relative bg-muted hover:opacity-95 transition-opacity cursor-zoom-in overflow-hidden"
+                  className="relative cursor-zoom-in bg-[var(--paper-warm)]"
                 >
                   <Image
                     src={m.url}
-                    alt={m.alt_text ?? "Property image"}
+                    alt={m.alt_text ?? `${title} — photo ${i + 2}`}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-opacity hover:opacity-95"
                     sizes="25vw"
                   />
                 </button>
               ))}
-              {/* Show all photos button */}
               {media.length > 5 && (
                 <button
+                  type="button"
                   onClick={() => openLightbox(0)}
-                  className="absolute bottom-4 right-4 flex items-center gap-2 rounded-xl bg-white/90 backdrop-blur-sm border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-white transition-colors shadow-md"
+                  className="absolute bottom-4 right-4 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[rgba(255,255,255,0.95)] px-4 text-[13px] font-medium text-ink shadow-ambient transition-colors hover:bg-white"
                 >
-                  <Grid3x3 className="h-4 w-4" />
-                  Show all {media.length} photos
+                  <Grid2x2 className="size-4" aria-hidden="true" />
+                  All {media.length} photos
                 </button>
               )}
             </div>
 
-            {/* Mobile: horizontal scroll */}
-            <div className="lg:hidden relative">
-              <div className="flex gap-3 overflow-x-auto scrollbar-hide rounded-2xl snap-x">
-                {media.map((m, i) => (
-                  <button
-                    key={i}
-                    onClick={() => openLightbox(i)}
-                    className="relative flex-shrink-0 w-80 aspect-[4/3] rounded-xl overflow-hidden bg-muted snap-start"
-                  >
-                    <Image
-                      src={m.url}
-                      alt={m.alt_text ?? "Property image"}
-                      fill
-                      className="object-cover"
-                      sizes="320px"
-                    />
-                  </button>
-                ))}
-              </div>
-              {/* Page indicator */}
-              <div className="absolute bottom-3 right-3 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-white">
-                1 / {media.length}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center rounded-2xl bg-muted h-64 mb-8">
-            <Building2 className="h-16 w-16 text-muted-foreground/30" />
-          </div>
-        )}
-
-        {/* ── Main layout ───────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-          {/* Left: Details */}
-          <div className="lg:col-span-2 space-y-10">
-
-            {/* Property header */}
-            <div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                <Badge variant="secondary" className="rounded-full capitalize font-medium">
-                  {property.property_type?.replace("_", " ")}
-                </Badge>
-                <Badge className="rounded-full bg-success/10 text-success border-success/20 font-medium">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Verified by Haloft
-                </Badge>
-                <Badge variant="outline" className="rounded-full font-medium">
-                  {property.available_rooms} of {property.total_rooms} rooms available
-                </Badge>
-              </div>
-
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground mb-3 heading-display">
-                {property.title}
-              </h1>
-
-              <div className="flex items-center flex-wrap gap-4">
-                <div className="flex items-center gap-1.5">
-                  <Star className="h-4 w-4 fill-amber text-amber" />
-                  <span className="font-semibold text-foreground">{avgRating || "New"}</span>
-                  <span className="text-muted-foreground text-sm">
-                    ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
-                  </span>
-                </div>
-                <span className="text-border hidden sm:inline">·</span>
-                <p className="text-muted-foreground flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  {property.address}
-                </p>
-              </div>
-            </div>
-
-            <div className="section-divider" />
-
-            {/* About */}
-            <div>
-              <h2 className="text-xl font-bold mb-4 text-foreground heading-display">
-                About this property
-              </h2>
-              <p className={`text-muted-foreground leading-relaxed text-base ${aboutExpanded ? "" : "line-clamp-3"}`}>
-                {aboutText}
-              </p>
-              {aboutLong && (
-                <button
-                  onClick={() => setAboutExpanded(!aboutExpanded)}
-                  className="mt-2 text-sm font-semibold text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                >
-                  {aboutExpanded ? "Show less" : "Read more"}
-                </button>
-              )}
-            </div>
-
-            <div className="section-divider" />
-
-            {/* Amenities — 3-col desktop, 2-col mobile, icon in square */}
-            <div>
-              <h2 className="text-xl font-bold mb-5 text-foreground heading-display">
-                What this place offers
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {(property.amenities ?? []).map((amenity) => (
-                  <div
-                    key={amenity}
-                    className="flex flex-col items-center text-center gap-2 rounded-xl border border-border bg-card p-4"
-                  >
-                    <span className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                      {amenityIcons[amenity] ?? <CheckCircle2 className="h-4 w-4" />}
-                    </span>
-                    <span className="text-xs font-medium text-foreground">
-                      {formatAmenityLabel(amenity)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* House Rules */}
-            {(property.rules ?? []).length > 0 && (
-              <>
-                <div className="section-divider" />
-                <div>
-                  <h2 className="text-xl font-bold mb-4 text-foreground heading-display">
-                    House rules
-                  </h2>
-                  <ul className="space-y-3">
-                    {(property.rules ?? []).map((rule, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        {rule}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
-
-            <div className="section-divider" />
-
-            {/* Rooms */}
-            <div>
-              <h2 className="text-xl font-bold mb-5 text-foreground heading-display">
-                Available rooms{rooms.length > 0 ? ` (${rooms.length})` : ""}
-              </h2>
-              {rooms.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {rooms.map((room) => (
-                    <div
-                      key={room.id}
-                      className="rounded-2xl border border-border bg-card p-5 hover:shadow-lg hover:shadow-black/5 transition-all"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-bold text-foreground heading-display">
-                            {room.name}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="secondary" className="rounded-full text-xs capitalize">
-                              {room.room_type?.replace("_", " ")}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {room.max_occupancy ?? 1} person{(room.max_occupancy ?? 1) > 1 ? "s" : ""}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {(room.amenities ?? []).slice(0, 4).map((a) => (
-                          <span
-                            key={a}
-                            className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-xs text-muted-foreground"
-                          >
-                            {amenityIcons[a] ?? null}
-                            {formatAmenityLabel(a)}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xl font-bold text-primary heading-display">
-                            ₦{room.price_per_month?.toLocaleString()}
-                          </p>
-                          <p className="text-xs text-muted-foreground">/month</p>
-                        </div>
-                        <Link
-                          href={`/${campusSlug}/property/${property.slug}/booking?room=${room.id}`}
-                        >
-                          <Button className="rounded-full font-semibold" size="sm">
-                            Book This Room
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-14 rounded-2xl border border-dashed border-border bg-muted/20">
-                  <BedDouble className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-medium">No rooms available at this time.</p>
-                  <p className="text-sm text-muted-foreground mt-1">Check back soon or contact us for waitlist info.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Reviews */}
-            <div className="section-divider" />
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Star className="h-6 w-6 fill-amber text-amber" />
-                  <span className="text-3xl font-bold text-foreground heading-display">{avgRating || "New"}</span>
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{reviewCount} {reviewCount === 1 ? "review" : "reviews"}</p>
-                  <p className="text-xs text-muted-foreground">From verified students</p>
-                </div>
-              </div>
-
-              {reviews.length > 0 ? (
-                <div className="space-y-5">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="rounded-2xl border border-border bg-card p-5">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div
-                          className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                          style={{
-                            background: `hsl(${(review.profiles?.full_name?.charCodeAt(0) ?? 0) * 7 % 360} 60% 50%)`,
-                          }}
-                        >
-                          {review.profiles?.full_name?.[0]?.toUpperCase() ?? "S"}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-sm text-foreground">
-                            {review.profiles?.full_name ?? "Student"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(review.created_at).toLocaleDateString("en-NG", {
-                              year: "numeric",
-                              month: "long",
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3.5 w-3.5 ${i < review.overall_rating ? "fill-amber text-amber" : "text-muted-foreground/30"}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {review.comment ?? "No comment provided."}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-14 rounded-2xl border border-dashed border-border bg-muted/20">
-                  <Star className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-medium">No reviews yet</p>
-                  <p className="text-sm text-muted-foreground mt-1">Be the first to review after your stay.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── Booking Sidebar ───────────────────────────── */}
-          <div className="lg:col-span-1">
-            <div className="booking-widget">
-              {/* Price */}
-              <div className="mb-5">
-                <p className="text-sm text-muted-foreground">Starting from</p>
-                <p className="text-3xl font-bold text-foreground mt-1 heading-display">
-                  ₦{property.min_price?.toLocaleString() ?? "N/A"}
-                  <span className="text-base font-normal text-muted-foreground"> /month</span>
-                </p>
-              </div>
-
-              {/* Rating inline */}
-              {avgRating > 0 && (
-                <div className="flex items-center gap-2 mb-5 pb-5 border-b border-border">
-                  <Star className="h-4 w-4 fill-amber text-amber" />
-                  <span className="font-bold text-sm">{avgRating}</span>
-                  <span className="text-muted-foreground text-sm">({reviewCount} reviews)</span>
-                </div>
-              )}
-
-              {/* Date picker hint */}
-              <div className="rounded-xl border border-border mb-5 overflow-hidden">
-                <div className="flex">
-                  <div className="flex-1 p-3 border-r border-border">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Move-in</p>
-                    <p className="text-sm text-foreground font-medium mt-0.5">Add date</p>
-                  </div>
-                  <div className="flex-1 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Duration</p>
-                    <p className="text-sm text-foreground font-medium mt-0.5">Select</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trust points */}
-              <div className="space-y-3 mb-6">
-                {[
-                  { icon: Calendar, label: "Flexible move-in dates" },
-                  { icon: User, label: "Verified by Haloft team" },
-                  { icon: Shield, label: "Secure booking process" },
-                  { icon: CheckCircle2, label: "What you see is what you get" },
-                ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <Icon className="h-4 w-4 text-foreground" />
-                    </div>
-                    {label}
-                  </div>
-                ))}
-              </div>
-
-              <Button className="w-full rounded-full h-14 font-bold text-base shadow-md shadow-primary/20 active:scale-95 transition-transform" size="lg">
-                Check Availability
-              </Button>
-
-              <p className="text-xs text-muted-foreground text-center mt-3 leading-relaxed">
-                You won&apos;t be charged yet. Availability confirmed instantly.
-              </p>
-
-              {/* Contact host */}
-              <div className="mt-4 pt-4 border-t border-border text-center">
-                <button className="text-sm text-foreground font-semibold underline underline-offset-4 hover:text-primary transition-colors">
-                  Contact host
-                </button>
-              </div>
-
-              {/* Report link */}
-              <div className="mt-3 text-center">
-                <button className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors">
-                  Report this listing
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Mobile Fixed Bottom Bar ──────────────────────── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border px-4 py-3 flex items-center justify-between gap-4 safe-area-pb">
-        <div>
-          <p className="text-lg font-bold text-foreground heading-display">
-            ₦{property.min_price?.toLocaleString() ?? "N/A"}
-            <span className="text-sm font-normal text-muted-foreground"> /month</span>
-          </p>
-          {avgRating > 0 && (
-            <div className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-amber text-amber" />
-              <span className="text-xs text-muted-foreground">{avgRating} · {reviewCount} reviews</span>
-            </div>
-          )}
-        </div>
-        <Button className="rounded-full h-12 px-6 font-bold text-base shadow-md shadow-primary/20 active:scale-95 transition-transform">
-          Check Availability
-        </Button>
-      </div>
-
-      {/* ── Lightbox ──────────────────────────────────────── */}
-      <AnimatePresence>
-        {lightboxOpen && media.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
-          >
-            {/* Top bar */}
-            <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-white/60 text-sm">
-                {lightboxIndex + 1} / {media.length}
-              </p>
-              <button
-                onClick={closeLightbox}
-                className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Main image */}
-            <div className="flex-1 flex items-center justify-center px-4 relative">
-              <button
-                onClick={prevImage}
-                className="absolute left-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors z-10"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-
-              <motion.div
-                key={lightboxIndex}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="relative w-full max-w-4xl aspect-[4/3]"
-              >
-                <Image
-                  src={media[lightboxIndex]?.url ?? ""}
-                  alt={media[lightboxIndex]?.alt_text ?? "Property image"}
-                  fill
-                  className="object-contain"
-                  sizes="90vw"
-                />
-              </motion.div>
-
-              <button
-                onClick={nextImage}
-                className="absolute right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors z-10"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Thumbnail strip */}
-            <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+            <div className="rail scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5 sm:-mx-8 sm:px-8 lg:hidden">
               {media.map((m, i) => (
                 <button
-                  key={i}
-                  onClick={() => setLightboxIndex(i)}
-                  className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                    i === lightboxIndex ? "border-white" : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
+                  key={m.url}
+                  type="button"
+                  onClick={() => openLightbox(i)}
+                  className="relative aspect-[4/3] w-[82vw] max-w-[26rem] shrink-0 overflow-hidden rounded-[14px] bg-[var(--paper-warm)]"
                 >
                   <Image
                     src={m.url}
-                    alt={m.alt_text ?? "Thumbnail"}
+                    alt={m.alt_text ?? `${title} — photo ${i + 1}`}
                     fill
+                    priority={i === 0}
                     className="object-cover"
-                    sizes="64px"
+                    sizes="82vw"
                   />
                 </button>
               ))}
             </div>
+          </>
+        ) : (
+          <div className="relative aspect-[16/9] overflow-hidden rounded-[18px] bg-[var(--paper-warm)] lg:aspect-[21/9]">
+            <Elevation variant="terrace" />
+            <p className="absolute bottom-4 left-4 rounded-full bg-[rgba(255,255,255,0.92)] px-3 py-1.5 text-[12px] font-medium text-muted-foreground">
+              Photos are added when the team visits
+            </p>
+          </div>
+        )}
+
+        {/* ── Body ─────────────────────────────────────────── */}
+        <div className="mt-10 grid grid-cols-12 gap-y-12 lg:mt-14 lg:gap-x-14">
+          <div className="col-span-12 lg:col-span-8">
+            <header>
+              <div className="flex flex-wrap items-center gap-2">
+                {property.is_verified ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--teal-tint)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--teal-deep)]">
+                    <BadgeCheck className="size-3.5" aria-hidden="true" />
+                    Verified by Haloft
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-[var(--line-strong)] px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+                    Not yet verified
+                  </span>
+                )}
+                <span className="rounded-full border border-[var(--line)] px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+                  {propertyTypeLabel(property.property_type)}
+                </span>
+                <span className="rounded-full border border-[var(--line)] px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+                  {property.available_rooms} of {property.total_rooms} rooms free
+                </span>
+              </div>
+
+              <h1 className="mt-5 display-2 max-w-[20ch] text-ink">{title}</h1>
+
+              <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14px] text-muted-foreground">
+                <span>{property.address}</span>
+                {minutes !== null && (
+                  <>
+                    <span aria-hidden="true" className="text-[var(--line-strong)]">·</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Footprints className="size-4 text-[var(--teal-deep)]" aria-hidden="true" />
+                      {minutes} min walk to {campusName ?? "campus"}
+                    </span>
+                  </>
+                )}
+                {avgRating > 0 && (
+                  <>
+                    <span aria-hidden="true" className="text-[var(--line-strong)]">·</span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+                      <Star
+                        className="size-4 fill-current text-[var(--sand-deep)]"
+                        aria-hidden="true"
+                      />
+                      {avgRating}
+                      <span className="font-normal text-muted-foreground">
+                        ({reviewCount})
+                      </span>
+                    </span>
+                  </>
+                )}
+              </p>
+            </header>
+
+            {/* About */}
+            {description && (
+              <section className="mt-10 border-t border-[var(--line)] pt-8">
+                <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  About this home
+                </h2>
+                <p
+                  className={`mt-4 max-w-[62ch] text-[15px] leading-[1.7] text-ink-soft ${
+                    descriptionOpen || !descriptionIsLong ? "" : "line-clamp-4"
+                  }`}
+                >
+                  {description}
+                </p>
+                {descriptionIsLong && (
+                  <button
+                    type="button"
+                    onClick={() => setDescriptionOpen((v) => !v)}
+                    className="mt-3 border-b border-[var(--line-strong)] pb-0.5 text-[13.5px] font-medium text-ink transition-colors hover:border-[var(--teal-deep)]"
+                  >
+                    {descriptionOpen ? "Show less" : "Read the full description"}
+                  </button>
+                )}
+              </section>
+            )}
+
+            {/* Amenities */}
+            {amenities.length > 0 && (
+              <section className="mt-10 border-t border-[var(--line)] pt-8">
+                <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  What this home has
+                </h2>
+                <ul className="mt-4 grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+                  {amenities.map((amenity) => {
+                    const Icon = AMENITY_ICONS[amenity] ?? Check;
+                    return (
+                      <li
+                        key={amenity}
+                        className="flex items-center gap-3 border-b border-[var(--line)] py-3 text-[14px] text-ink-soft"
+                      >
+                        <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        {amenityLabel(amenity)}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {/* House rules */}
+            {rules.length > 0 && (
+              <section className="mt-10 border-t border-[var(--line)] pt-8">
+                <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  House rules
+                </h2>
+                <ul className="mt-4 space-y-3">
+                  {rules.map((rule, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 text-[14px] leading-[1.6] text-ink-soft"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--line-strong)]"
+                      />
+                      {rule}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Rooms */}
+            <section id="rooms" className="mt-10 scroll-mt-28 border-t border-[var(--line)] pt-8">
+              <div className="flex items-baseline justify-between gap-4">
+                <h2 className="display-3 text-ink">Rooms available</h2>
+                {rooms.length > 0 && (
+                  <span className="text-[13px] text-muted-foreground tabular">
+                    {rooms.length} {rooms.length === 1 ? "room" : "rooms"}
+                  </span>
+                )}
+              </div>
+
+              {rooms.length > 0 ? (
+                <ul className="mt-6 border-t border-[var(--line)]">
+                  {rooms.map((room) => (
+                    <li
+                      key={room.id}
+                      className="flex flex-col gap-4 border-b border-[var(--line)] py-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[16px] font-semibold tracking-[-0.02em] text-ink">
+                          {room.name}
+                        </p>
+                        <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground">
+                          <span className="capitalize">
+                            {room.room_type?.replace(/_/g, " ")}
+                          </span>
+                          <span aria-hidden="true" className="text-[var(--line-strong)]">·</span>
+                          <span>
+                            {room.max_occupancy ?? 1}{" "}
+                            {(room.max_occupancy ?? 1) > 1 ? "people" : "person"}
+                          </span>
+                          {(room.amenities ?? []).length > 0 && (
+                            <>
+                              <span aria-hidden="true" className="text-[var(--line-strong)]">·</span>
+                              <span className="truncate">
+                                {(room.amenities ?? [])
+                                  .slice(0, 3)
+                                  .map(amenityLabel)
+                                  .join(" · ")}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center justify-between gap-5 sm:justify-end">
+                        <p className="text-[17px] font-semibold text-ink tabular">
+                          {formatNaira(Number(room.price_per_month ?? 0))}
+                          <span className="ml-1 text-[12px] font-normal text-muted-foreground">
+                            /mo
+                          </span>
+                        </p>
+                        <Link
+                          href={`/${campusSlug}/property/${property.slug}/booking?room=${room.id}`}
+                          className="group inline-flex h-11 items-center gap-2 rounded-[10px] bg-[var(--navy)] px-5 text-[13.5px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+                        >
+                          Request this room
+                          <ArrowRight className="size-3.5 arrow-nudge" aria-hidden="true" />
+                        </Link>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-6 rounded-[14px] border border-dashed border-[var(--line-strong)] px-6 py-14 text-center">
+                  <p className="text-[15px] font-medium text-ink">
+                    Every room here is taken right now
+                  </p>
+                  <p className="mx-auto mt-2 max-w-[44ch] text-[13.5px] text-muted-foreground">
+                    Rooms free up between semesters. Browse other homes near
+                    campus in the meantime.
+                  </p>
+                  <Link
+                    href={`/${campusSlug}/search`}
+                    className="mt-6 inline-flex h-11 items-center rounded-[10px] border border-[var(--line-strong)] px-5 text-[13.5px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)]"
+                  >
+                    See other homes
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* Reviews */}
+            <section className="mt-10 border-t border-[var(--line)] pt-8">
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <h2 className="display-3 text-ink">
+                  {avgRating > 0 ? `${avgRating} out of 5` : "No reviews yet"}
+                </h2>
+                <p className="text-[13.5px] text-muted-foreground">
+                  {reviewCount > 0
+                    ? `${reviewCount} ${reviewCount === 1 ? "review" : "reviews"} from students who stayed`
+                    : "Reviews appear once a student has completed a stay"}
+                </p>
+              </div>
+
+              {reviews.length > 0 && (
+                <ul className="mt-7 grid grid-cols-1 gap-x-10 sm:grid-cols-2">
+                  {reviews.map((review) => (
+                    <li
+                      key={review.id}
+                      className="border-t border-[var(--line)] py-6"
+                    >
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`size-3.5 ${
+                              i < review.overall_rating
+                                ? "fill-current text-[var(--sand-deep)]"
+                                : "text-[var(--line-strong)]"
+                            }`}
+                            aria-hidden="true"
+                          />
+                        ))}
+                        <span className="sr-only">
+                          {review.overall_rating} out of 5
+                        </span>
+                      </div>
+                      <p className="mt-3 max-w-[46ch] text-[14px] leading-[1.65] text-ink-soft">
+                        {review.comment ?? "No comment left."}
+                      </p>
+                      <p className="mt-3 text-[12.5px] text-muted-foreground">
+                        {review.profiles?.full_name ?? "Student"} ·{" "}
+                        {new Date(review.created_at).toLocaleDateString("en-NG", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+
+          {/* ── Sticky panel ──────────────────────────────── */}
+          <div className="col-span-12 lg:col-span-4">
+            <div className="lg:sticky lg:top-24">
+              <div className="rounded-[16px] border border-[var(--line)] bg-card p-6 shadow-ambient">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Rent from
+                </p>
+                <p className="mt-1.5 text-[30px] font-semibold tracking-[-0.032em] text-ink tabular">
+                  {formatNaira(Number(property.min_price ?? 0))}
+                  <span className="ml-1.5 text-[14px] font-normal text-muted-foreground">
+                    / month
+                  </span>
+                </p>
+
+                <dl className="mt-6 space-y-3 border-t border-[var(--line)] pt-5 text-[13.5px]">
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted-foreground">Home type</dt>
+                    <dd className="font-medium text-ink">
+                      {propertyTypeLabel(property.property_type)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted-foreground">Rooms free</dt>
+                    <dd className="font-medium text-ink tabular">
+                      {property.available_rooms} of {property.total_rooms}
+                    </dd>
+                  </div>
+                  {minutes !== null && (
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-muted-foreground">Walk to campus</dt>
+                      <dd className="font-medium text-ink tabular">
+                        {minutes} min
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+
+                <a
+                  href="#rooms"
+                  className="group mt-6 inline-flex h-13 w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--navy)] text-[14.5px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+                >
+                  {rooms.length > 0 ? "See available rooms" : "See room status"}
+                  <ArrowRight className="size-4 arrow-nudge" aria-hidden="true" />
+                </a>
+                <p className="mt-3 text-center text-[12px] text-muted-foreground">
+                  Requesting a room doesn&apos;t charge you. Payment only comes
+                  after the booking is confirmed.
+                </p>
+              </div>
+
+              <a
+                href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+                  `Report a listing: ${title}`
+                )}`}
+                className="mt-4 inline-flex items-center gap-2 text-[12.5px] text-muted-foreground transition-colors hover:text-ink"
+              >
+                <Flag className="size-3.5" aria-hidden="true" />
+                Something wrong with this listing?
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile action bar ────────────────────────────── */}
+      <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-[var(--line)] bg-[rgba(247,247,242,0.96)] backdrop-blur-[10px] md:hidden">
+        <div className="shell flex items-center justify-between gap-4 py-3">
+          <div>
+            <p className="text-[17px] font-semibold text-ink tabular">
+              {formatNaira(Number(property.min_price ?? 0))}
+              <span className="ml-1 text-[12px] font-normal text-muted-foreground">
+                /mo
+              </span>
+            </p>
+            <p className="text-[11.5px] text-muted-foreground">
+              {property.available_rooms} of {property.total_rooms} rooms free
+            </p>
+          </div>
+          <a
+            href="#rooms"
+            className="inline-flex h-12 items-center rounded-[10px] bg-[var(--navy)] px-5 text-[14px] font-medium text-white"
+          >
+            See rooms
+          </a>
+        </div>
+      </div>
+
+      {/* ── Lightbox ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {lightboxOpen && media.length > 0 && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex flex-col bg-[rgba(10,15,20,0.97)]"
+            initial={reduced ? undefined : { opacity: 0 }}
+            animate={reduced ? undefined : { opacity: 1 }}
+            exit={reduced ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${title} photos`}
+          >
+            <div className="flex items-center justify-between px-5 py-4">
+              <p className="text-[13px] text-white/60 tabular">
+                {lightboxIndex + 1} / {media.length}
+              </p>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={closeLightbox}
+                className="inline-flex size-11 items-center justify-center rounded-[10px] text-white transition-colors hover:bg-white/10"
+                aria-label="Close photos"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="relative flex flex-1 items-center justify-center px-4">
+              {media.length > 1 && (
+                <button
+                  type="button"
+                  onClick={prevImage}
+                  className="absolute left-3 z-10 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft className="size-5" aria-hidden="true" />
+                </button>
+              )}
+
+              <div className="relative aspect-[4/3] w-full max-w-4xl">
+                <Image
+                  src={media[lightboxIndex]?.url ?? ""}
+                  alt={media[lightboxIndex]?.alt_text ?? `${title} photo`}
+                  fill
+                  className="object-contain"
+                  sizes="90vw"
+                />
+              </div>
+
+              {media.length > 1 && (
+                <button
+                  type="button"
+                  onClick={nextImage}
+                  className="absolute right-3 z-10 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="Next photo"
+                >
+                  <ChevronRight className="size-5" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+
+            {media.length > 1 && (
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto px-5 py-4">
+                {media.map((m, i) => (
+                  <button
+                    key={m.url}
+                    type="button"
+                    onClick={() => setLightboxIndex(i)}
+                    className={`relative size-16 shrink-0 overflow-hidden rounded-[8px] transition-opacity ${
+                      i === lightboxIndex
+                        ? "ring-2 ring-white"
+                        : "opacity-55 hover:opacity-100"
+                    }`}
+                    aria-label={`Photo ${i + 1}`}
+                  >
+                    <Image src={m.url} alt="" fill className="object-cover" sizes="64px" />
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

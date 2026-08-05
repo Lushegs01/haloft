@@ -1,11 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeSearchTerm } from "@/lib/utils";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Building2, Search, Plus } from "lucide-react";
+import { Building2, Search } from "lucide-react";
 
 export default async function AdminRoomsPage({
   searchParams,

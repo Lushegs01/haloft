@@ -1,14 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBooking } from "./actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { formatNaira } from "@/components/haloft/format";
 import type { RoomListing } from "@/types/database";
 
 interface BookingFormProps {
@@ -18,6 +16,33 @@ interface BookingFormProps {
   propertyTitle: string;
   /** False when the room is already reserved, occupied, or under maintenance */
   isBookable?: boolean;
+}
+
+const inputClass =
+  "h-12 w-full rounded-[10px] border border-[var(--line-strong)] bg-card px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-[var(--teal-deep)]";
+
+function Notice({
+  title,
+  body,
+  children,
+}: {
+  title: string;
+  body: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="shell py-16 lg:py-24">
+      <div className="mx-auto max-w-[32rem] text-center">
+        <h1 className="display-3 text-ink">{title}</h1>
+        <p className="mx-auto mt-3 max-w-[46ch] text-[14.5px] leading-[1.65] text-muted-foreground">
+          {body}
+        </p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function BookingForm({
@@ -31,9 +56,10 @@ export function BookingForm({
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
-  const monthlyPrice = room.price_per_month ?? 0;
+  const monthlyPrice = Number(room.price_per_month ?? 0);
   const depositMonths = room.deposit_months ?? 1;
   const deposit = monthlyPrice * depositMonths;
+  const today = new Date().toISOString().split("T")[0];
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,166 +78,207 @@ export function BookingForm({
     // Staying here is not an option: the booking reserved this room, so a
     // re-render of this route would no longer find it as bookable.
     setSuccess(true);
-    toast.success("Booking submitted successfully!");
+    toast.success("Request sent.");
     router.push(`/${campusSlug}/dashboard`);
   }
 
   if (!isBookable && !success) {
     return (
-      <div className="container mx-auto px-4 lg:px-8 py-12 max-w-lg">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">This room is taken</h2>
-            <p className="text-muted-foreground mb-6">
-              {room.name} at {propertyTitle} is no longer available. Other rooms
-              at this property may still be open.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button onClick={() => router.push(`/${campusSlug}/property/${propertySlug}`)}>
-                See other rooms here
-              </Button>
-              <Button variant="outline" onClick={() => router.push(`/${campusSlug}/search`)}>
-                Browse all listings
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Notice
+        title="This room is taken"
+        body={`${room.name} at ${propertyTitle} is no longer available. Other rooms in the same building may still be open.`}
+      >
+        <Link
+          href={`/${campusSlug}/property/${propertySlug}`}
+          className="inline-flex h-12 items-center justify-center rounded-[10px] bg-[var(--navy)] px-6 text-[14px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+        >
+          See other rooms here
+        </Link>
+        <Link
+          href={`/${campusSlug}/search`}
+          className="inline-flex h-12 items-center justify-center rounded-[10px] border border-[var(--line-strong)] px-6 text-[14px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)]"
+        >
+          Browse all homes
+        </Link>
+      </Notice>
     );
   }
 
   if (success) {
     return (
-      <div className="container mx-auto px-4 lg:px-8 py-12 max-w-lg">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <CheckCircle2 className="h-16 w-16 text-success mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-            <p className="text-muted-foreground mb-6">
-              Your booking request has been submitted. You will receive a confirmation email once it is reviewed by our team.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button onClick={() => router.push(`/${campusSlug}/dashboard`)}>
-                View My Bookings
-              </Button>
-              <Button variant="outline" onClick={() => router.push(`/${campusSlug}/property/${propertySlug}`)}>
-                Back to Property
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Notice
+        title="Request sent"
+        body="The team will confirm availability with whoever manages the building and email you. You have not been charged."
+      >
+        <Link
+          href={`/${campusSlug}/dashboard`}
+          className="inline-flex h-12 items-center justify-center rounded-[10px] bg-[var(--navy)] px-6 text-[14px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+        >
+          View my requests
+        </Link>
+      </Notice>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 lg:px-8 py-8">
-      <button
-        onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+    <div className="shell py-8 lg:py-12">
+      <Link
+        href={`/${campusSlug}/property/${propertySlug}`}
+        className="inline-flex items-center gap-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:text-ink"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </button>
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back to {propertyTitle}
+      </Link>
 
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-2">Book Your Room</h1>
-        <p className="text-muted-foreground mb-6">
-          {propertyTitle} — {room.name}
-        </p>
+      <div className="mt-8 grid grid-cols-12 gap-y-10 lg:gap-x-14">
+        <div className="col-span-12 lg:col-span-7">
+          <p className="label label-rule max-w-[14rem]">Request a room</p>
+          <h1 className="mt-5 display-3 max-w-[18ch] text-ink">
+            {room.name} at {propertyTitle}
+          </h1>
+          <p className="mt-3 max-w-[48ch] text-[14.5px] leading-[1.65] text-muted-foreground">
+            Tell us when you want to move in. Nothing is charged now — the team
+            confirms the room is still free, and payment comes after that.
+          </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Booking Details
-              </CardTitle>
-              <CardDescription>Select your move-in and move-out dates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input type="hidden" name="roomId" value={room.id ?? ""} />
-                <input type="hidden" name="propertyId" value={room.property_id ?? ""} />
-                <input type="hidden" name="campusSlug" value={campusSlug} />
+          <form onSubmit={handleSubmit} className="mt-9 space-y-6">
+            <input type="hidden" name="roomId" value={room.id ?? ""} />
+            <input type="hidden" name="propertyId" value={room.property_id ?? ""} />
+            <input type="hidden" name="campusSlug" value={campusSlug} />
 
-                <div className="space-y-2">
-                  <Label htmlFor="checkInDate">Move-in Date</Label>
-                  <Input
-                    id="checkInDate"
-                    name="checkInDate"
-                    type="date"
-                    required
-                    min={new Date().toISOString().split("T")[0]}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="checkInDate" className="text-[13px] font-medium text-ink">
+                  Move-in date
+                </label>
+                <input
+                  id="checkInDate"
+                  name="checkInDate"
+                  type="date"
+                  required
+                  min={today}
+                  className={`${inputClass} mt-2`}
+                />
+              </div>
+              <div>
+                <label htmlFor="checkOutDate" className="text-[13px] font-medium text-ink">
+                  Move-out date
+                </label>
+                <input
+                  id="checkOutDate"
+                  name="checkOutDate"
+                  type="date"
+                  required
+                  min={today}
+                  className={`${inputClass} mt-2`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-baseline justify-between gap-3">
+                <label htmlFor="specialRequests" className="text-[13px] font-medium text-ink">
+                  Anything the team should know
+                </label>
+                <span className="text-[12px] text-muted-foreground">Optional</span>
+              </div>
+              <input
+                id="specialRequests"
+                name="specialRequests"
+                placeholder="Moving in with a friend, arriving late, questions about the meter…"
+                className={`${inputClass} mt-2`}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="group inline-flex h-13 w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--navy)] text-[14.5px] font-medium text-white transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-50 sm:w-auto sm:px-7"
+            >
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <>
+                  Send request
+                  <ArrowRight className="size-4 arrow-nudge" aria-hidden="true" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Summary */}
+        <div className="col-span-12 lg:col-span-4 lg:col-start-9">
+          <div className="rounded-[16px] border border-[var(--line)] bg-card p-6 shadow-ambient">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              What you&apos;d pay
+            </p>
+
+            <dl className="mt-4 space-y-3 text-[13.5px]">
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">Rent per month</dt>
+                <dd className="font-medium text-ink tabular">
+                  {formatNaira(monthlyPrice)}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">
+                  Deposit ({depositMonths}{" "}
+                  {depositMonths === 1 ? "month" : "months"})
+                </dt>
+                <dd className="font-medium text-ink tabular">
+                  {formatNaira(deposit)}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4 border-t border-[var(--line)] pt-3">
+                <dt className="font-medium text-ink">Due at first payment</dt>
+                <dd className="font-semibold text-ink tabular">
+                  {formatNaira(monthlyPrice + deposit)}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="mt-6 space-y-3 border-t border-[var(--line)] pt-5">
+              {[
+                "Sending this request doesn't charge you.",
+                "You pay from your dashboard once it's confirmed.",
+                "Cancel free of charge before you pay.",
+              ].map((line) => (
+                <p
+                  key={line}
+                  className="flex items-start gap-2.5 text-[12.5px] leading-[1.55] text-muted-foreground"
+                >
+                  <Check
+                    className="mt-0.5 size-3.5 shrink-0 text-[var(--teal-deep)]"
+                    aria-hidden="true"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="checkOutDate">Move-out Date</Label>
-                  <Input
-                    id="checkOutDate"
-                    name="checkOutDate"
-                    type="date"
-                    required
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="specialRequests">Special Requests (optional)</Label>
-                  <Input
-                    id="specialRequests"
-                    name="specialRequests"
-                    placeholder="Any specific needs or questions..."
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Submit Booking Request
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Price Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Monthly Rent</span>
-                  <span>₦{monthlyPrice.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Security Deposit</span>
-                  <span>₦{deposit.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Deposit Months</span>
-                  <span>{depositMonths}</span>
-                </div>
-                <div className="border-t pt-3 flex justify-between font-semibold">
-                  <span>First Payment</span>
-                  <span>₦{(monthlyPrice + deposit).toLocaleString()}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Room Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm"><span className="font-medium">Room:</span> {room.name}</p>
-                <p className="text-sm"><span className="font-medium">Type:</span> {room.room_type}</p>
-                <p className="text-sm"><span className="font-medium">Capacity:</span> {room.max_occupancy} person(s)</p>
-                <p className="text-sm"><span className="font-medium">Floor:</span> {room.floor ?? "N/A"}</p>
-              </CardContent>
-            </Card>
+                  {line}
+                </p>
+              ))}
+            </div>
           </div>
+
+          <dl className="mt-5 space-y-2.5 border-t border-[var(--line)] pt-5 text-[13px]">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Room type</dt>
+              <dd className="capitalize text-ink">
+                {room.room_type?.replace(/_/g, " ")}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Sleeps</dt>
+              <dd className="text-ink tabular">
+                {room.max_occupancy ?? 1}{" "}
+                {(room.max_occupancy ?? 1) > 1 ? "people" : "person"}
+              </dd>
+            </div>
+            {room.floor != null && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">Floor</dt>
+                <dd className="text-ink tabular">{room.floor}</dd>
+              </div>
+            )}
+          </dl>
         </div>
       </div>
     </div>

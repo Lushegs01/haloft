@@ -44,7 +44,7 @@ export default async function PropertyPage({
 
   const { data: campusData } = await supabase
     .from("campuses")
-    .select("id, name, slug")
+    .select("id, name, slug, latitude, longitude")
     .eq("slug", campus)
     .eq("is_active", true)
     .is("deleted_at", null)
@@ -98,6 +98,9 @@ export default async function PropertyPage({
       media={media ?? []}
       reviews={reviews ?? []}
       campusSlug={campusData.slug}
+      campusName={campusData.name}
+      campusLat={campusData.latitude}
+      campusLng={campusData.longitude}
     />
   );
 }

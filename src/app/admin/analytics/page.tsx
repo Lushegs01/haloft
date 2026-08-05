@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, DollarSign, Users, Building2, FileText } from "lucide-react";
+import { TrendingUp, DollarSign, Users, Building2 } from "lucide-react";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();

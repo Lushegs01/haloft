@@ -1,60 +1,57 @@
 import { Navbar } from "@/components/haloft/navbar";
 import { Hero } from "@/components/haloft/hero";
 import { TrustStrip } from "@/components/haloft/trust-strip";
-import { ProblemSection } from "@/components/haloft/problem-section";
+import { ProblemStory } from "@/components/haloft/problem-story";
+import { PropertyGallery } from "@/components/haloft/property-gallery";
+import { UniversityDiscovery } from "@/components/haloft/university-discovery";
 import { HowItWorks } from "@/components/haloft/how-it-works";
-import { FeaturedSection } from "@/components/haloft/featured-section";
-import { UniversityGrid } from "@/components/haloft/university-grid";
-import { MapPreview } from "@/components/haloft/map-preview";
-import { PropertyDetailPreview } from "@/components/haloft/property-detail-preview";
-import { VerificationSection } from "@/components/haloft/verification-section";
-import { PriceBreakdown } from "@/components/haloft/price-breakdown";
-import { ComparisonTable } from "@/components/haloft/comparison-table";
+import { ProductShowcase } from "@/components/haloft/product-showcase";
+import { TrustSection } from "@/components/haloft/trust-section";
 import { StudentFilters } from "@/components/haloft/student-filters";
-import { NoAgentsSection } from "@/components/haloft/no-agents-section";
-import { OwnerDashboardPreview } from "@/components/haloft/owner-dashboard-preview";
-import { CampusEcosystem } from "@/components/haloft/campus-ecosystem";
-import { TestimonialsSection } from "@/components/haloft/testimonials-section";
-import { FaqSection } from "@/components/haloft/faq-section";
+import { OwnerSection } from "@/components/haloft/owner-section";
+import { Principles } from "@/components/haloft/principles";
 import { FinalCta } from "@/components/haloft/final-cta";
-import { LandingFooter } from "@/components/haloft/landing-footer";
+import { Footer } from "@/components/layout/footer";
 import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 import { getLandingData } from "@/data/marketplace";
 
 export default async function LandingPage() {
   const { universities, listings } = await getLandingData();
 
+  // The hero is anchored by whichever home has a photograph; failing
+  // that, by the first card in the set.
+  const featured =
+    listings.listings.find((l) => l.imageUrl) ?? listings.listings[0];
+
+  const campusSlug =
+    universities.universities.find((u) => u.status === "live")?.slug ??
+    DEFAULT_CAMPUS_SLUG;
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <>
       <Navbar />
-      <main className="flex-1">
-        <Hero universities={universities.universities} />
+      <main id="main" className="flex-1">
+        <Hero universities={universities.universities} featured={featured} />
         <TrustStrip />
-        <ProblemSection />
-        <HowItWorks />
-        <FeaturedSection
+        <ProblemStory />
+        <PropertyGallery
           listings={listings.listings}
           source={listings.source}
-          campusSlug={DEFAULT_CAMPUS_SLUG}
+          campusSlug={campusSlug}
         />
-        <UniversityGrid
+        <UniversityDiscovery
           universities={universities.universities}
           source={universities.source}
         />
-        <MapPreview />
-        <PropertyDetailPreview />
-        <VerificationSection />
-        <PriceBreakdown />
-        <ComparisonTable />
-        <StudentFilters />
-        <NoAgentsSection />
-        <OwnerDashboardPreview />
-        <CampusEcosystem />
-        <TestimonialsSection />
-        <FaqSection />
-        <FinalCta />
+        <HowItWorks />
+        <ProductShowcase />
+        <TrustSection />
+        <StudentFilters campusSlug={campusSlug} />
+        <OwnerSection />
+        <Principles />
+        <FinalCta campusSlug={campusSlug} />
       </main>
-      <LandingFooter />
-    </div>
+      <Footer campusSlug={campusSlug} />
+    </>
   );
 }

@@ -6,8 +6,8 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-col">
       <Header />
-      <main className="flex-1">
-        <article className="container mx-auto max-w-3xl px-4 lg:px-8 py-12 lg:py-16 prose-legal">
+      <main id="main" className="flex-1">
+        <article className="prose-legal mx-auto w-full max-w-[48rem] px-5 py-14 sm:px-8 lg:py-20">
           {children}
         </article>
       </main>
