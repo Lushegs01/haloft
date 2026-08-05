@@ -171,6 +171,13 @@ Other decisions that hold the line:
   the Supabase linter will flag it. The exception is a helper that takes
   a column (`is_campus_admin(campus_id)`): its result varies per row, so
   wrapping it only builds a correlated subquery that cannot be hoisted.
+- Run `011_view_security_invoker.sql`: Postgres creates views SECURITY
+  DEFINER, so `property_listings` ran as its owner and skipped RLS
+  entirely. It filters `deleted_at` but never `status`, which left every
+  draft listing readable straight off the REST endpoint with the public
+  anon key. **New views need `WITH (security_invoker = on)`** unless they
+  exist specifically to cross an RLS boundary — `public_profiles` is the
+  one that does, and the migration explains why it must stay a definer.
 
 ### Imagery
 
