@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HaloftLogo } from "@/components/ui/logo";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { CONTACT_EMAIL, DEFAULT_CAMPUS_SLUG, SOCIAL_LINKS } from "@/lib/constants";
 
 export function Footer({ campusSlug }: { campusSlug?: string } = {}) {
@@ -97,9 +98,18 @@ export function Footer({ campusSlug }: { campusSlug?: string } = {}) {
         </div>
 
         <div className="mt-16 flex flex-col gap-4 border-t border-white/12 pt-7 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[12.5px] text-white/45">
-            © {new Date().getFullYear()} Haloft. All rights reserved.
-          </p>
+          {/* Copyright and platform credit travel together, so the social
+              row keeps the far end of the bar when it appears. */}
+          <div className="flex flex-col gap-2 text-[12.5px] sm:flex-row sm:items-center sm:gap-4">
+            <p className="text-white/45">
+              © {new Date().getFullYear()} Haloft. All rights reserved.
+            </p>
+            <span
+              aria-hidden="true"
+              className="hidden h-3 w-px bg-white/15 sm:block"
+            />
+            <PoweredBy className="text-white/65" />
+          </div>
 
           {SOCIAL_LINKS.length > 0 && (
             <ul className="flex items-center gap-6">
