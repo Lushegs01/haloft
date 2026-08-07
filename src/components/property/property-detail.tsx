@@ -27,7 +27,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { Elevation } from "@/components/haloft/elevation";
+import { Facade } from "@/components/haloft/facade";
 import { formatNaira, propertyTypeLabel } from "@/components/haloft/format";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { walkMinutes } from "@/lib/utils";
@@ -282,7 +282,7 @@ export function PropertyDetailPage({
           </>
         ) : (
           <div className="relative aspect-[16/9] overflow-hidden rounded-[18px] bg-[var(--paper-warm)] lg:aspect-[21/9]">
-            <Elevation variant="terrace" />
+            <Facade variant="estate" priority sizes="(max-width: 1024px) 100vw, 82vw" />
             <p className="absolute bottom-4 left-4 rounded-full bg-[rgba(255,255,255,0.92)] px-3 py-1.5 text-[12px] font-medium text-muted-foreground">
               Photos are added when the team visits
             </p>

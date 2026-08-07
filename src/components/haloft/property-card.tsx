@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BadgeCheck, Footprints } from "lucide-react";
 import type { ListingCard } from "@/data/marketplace";
-import { Elevation } from "./elevation";
+import { Facade, facadeForIndex } from "./facade";
 import { formatNaira, propertyTypeLabel } from "./format";
 
 const RATIOS = {
@@ -11,8 +11,6 @@ const RATIOS = {
   square: "aspect-[1/1]",
   tall: "aspect-[3/4]",
 } as const;
-
-const ELEVATIONS = ["tower", "terrace", "court"] as const;
 
 export function PropertyCard({
   listing,
@@ -32,7 +30,6 @@ export function PropertyCard({
   // behind them, so they must not pretend to be a link.
   const isSample = listing.source === "sample";
   const typeLabel = propertyTypeLabel(listing.propertyType);
-  const elevation = ELEVATIONS[index % ELEVATIONS.length];
 
   // The catalogue sometimes repeats the property type inside the amenity
   // list ("Self-contained · Self-contained · Water"). Drop the duplicate.
@@ -54,7 +51,11 @@ export function PropertyCard({
             className="img-zoom object-cover"
           />
         ) : (
-          <Elevation variant={elevation} className="img-zoom" />
+          <Facade
+            variant={facadeForIndex(index)}
+            className="img-zoom"
+            sizes="(max-width: 640px) 80vw, (max-width: 1024px) 45vw, 32vw"
+          />
         )}
 
         {listing.verified && (

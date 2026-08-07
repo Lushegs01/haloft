@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import { HaloftLogo } from "@/components/ui/logo";
-import { Elevation } from "@/components/haloft/elevation";
+import { Facade } from "@/components/haloft/facade";
 import { AppToaster } from "@/components/ui/app-toaster";
 
 const PROMISES = [
@@ -34,11 +34,11 @@ export function AuthShell({
         {/* The façade sits under the copy as texture, not as an image:
             faded right down and masked away before it reaches the text. */}
         <div
-          className="absolute inset-x-0 bottom-0 h-[46%] opacity-[0.09] [mask-image:linear-gradient(to_top,black_15%,transparent)]"
+          className="absolute inset-x-0 bottom-0 h-[46%] opacity-[0.2] [mask-image:linear-gradient(to_top,black_15%,transparent)]"
           aria-hidden="true"
         >
           <div className="relative h-full w-full">
-            <Elevation variant="court" />
+            <Facade variant="court" sizes="(max-width: 1280px) 27rem, 32rem" />
           </div>
         </div>
 

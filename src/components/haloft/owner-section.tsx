@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { CONTACT_EMAIL } from "@/lib/constants";
-import { Elevation } from "./elevation";
+import { Facade } from "./facade";
 import { Reveal } from "./motion";
 
 const PROCESS = [
@@ -69,7 +69,7 @@ export function OwnerSection() {
 
             <Reveal delay={0.22}>
               <figure className="relative mt-12 hidden aspect-[16/7] overflow-hidden rounded-[16px] lg:block">
-                <Elevation variant="terrace" />
+                <Facade variant="terrace" sizes="46vw" />
               </figure>
             </Reveal>
           </div>

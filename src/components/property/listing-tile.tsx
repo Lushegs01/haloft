@@ -1,11 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BadgeCheck, Footprints, Star } from "lucide-react";
-import { Elevation } from "@/components/haloft/elevation";
+import { Facade, facadeForIndex } from "@/components/haloft/facade";
 import { formatNaira, propertyTypeLabel } from "@/components/haloft/format";
 import type { PropertyListing } from "@/types/database";
-
-const ELEVATIONS = ["tower", "terrace", "court"] as const;
 
 /**
  * The listing tile used everywhere a catalogue row is shown — campus
@@ -47,9 +45,11 @@ export function ListingTile({
               sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 31vw"
             />
           ) : (
-            <Elevation
-              variant={ELEVATIONS[index % ELEVATIONS.length]}
+            <Facade
+              variant={facadeForIndex(index)}
               className="img-zoom"
+              priority={priority}
+              sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 31vw"
             />
           )}
 

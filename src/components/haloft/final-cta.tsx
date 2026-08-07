@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { Elevation } from "./elevation";
+import { Facade } from "./facade";
 import { Reveal, MaskReveal } from "./motion";
 
 export function FinalCta({ campusSlug }: { campusSlug: string }) {
@@ -47,7 +47,10 @@ export function FinalCta({ campusSlug }: { campusSlug: string }) {
           <div className="col-span-12 lg:col-span-5">
             <MaskReveal className="lg:-mt-44 xl:-mt-52">
               <figure className="relative aspect-[16/10] overflow-hidden rounded-[18px] ring-1 ring-white/10 sm:aspect-[16/9] lg:aspect-[4/5]">
-                <Elevation variant="tower" />
+                <Facade
+                  variant="tower"
+                  sizes="(max-width: 1024px) 92vw, 40vw"
+                />
               </figure>
             </MaskReveal>
           </div>

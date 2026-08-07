@@ -1,5 +1,5 @@
 import { BadgeCheck, Check, Flag } from "lucide-react";
-import { Elevation } from "./elevation";
+import { Facade } from "./facade";
 import { Reveal, MaskReveal } from "./motion";
 
 const CHECKS = [
@@ -77,7 +77,10 @@ export function TrustSection() {
             <div className="relative mx-auto w-full max-w-[32rem] lg:ml-auto lg:mr-0 lg:mt-10">
               <MaskReveal delay={0.12}>
                 <div className="relative aspect-[5/4] overflow-hidden rounded-[18px] sm:aspect-[4/3] lg:aspect-[5/6]">
-                  <Elevation variant="court" />
+                  <Facade
+                    variant="court"
+                    sizes="(max-width: 1024px) 92vw, 44vw"
+                  />
                 </div>
               </MaskReveal>
 
