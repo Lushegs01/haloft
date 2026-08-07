@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, Footprints } from "lucide-react";
 import type { ListingCard, UniversityCard } from "@/data/marketplace";
 import { HeroSearch } from "./hero-search";
-import { Elevation } from "./elevation";
+import { Facade } from "./facade";
 import { LinesIn, Reveal, MaskReveal } from "./motion";
 import { formatNaira } from "./format";
 
@@ -97,7 +97,11 @@ export function Hero({
                       className="object-cover"
                     />
                   ) : (
-                    <Elevation variant="tower" />
+                    <Facade
+                      variant="block"
+                      priority
+                      sizes="(max-width: 1024px) 92vw, 42vw"
+                    />
                   )}
 
                   <figcaption className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-[rgba(17,28,39,0.72)] px-3 py-1.5 text-[11.5px] font-medium text-white backdrop-blur-[2px]">

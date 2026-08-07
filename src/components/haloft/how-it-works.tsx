@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BadgeCheck, Check, ChevronDown, Footprints } from "lucide-react";
-import { Elevation } from "./elevation";
+import { Facade } from "./facade";
 
 const STEPS = [
   {
@@ -103,7 +103,7 @@ function InspectionFragment() {
   return (
     <div className="w-full max-w-[26rem] overflow-hidden rounded-[14px] border border-[var(--line)] bg-card shadow-ambient">
       <div className="relative h-[124px] bg-[var(--paper-warm)]">
-        <Elevation variant="terrace" />
+        <Facade variant="hostel" sizes="(max-width: 640px) 100vw, 26rem" />
         <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.94)] px-2.5 py-1 text-[11px] font-medium text-[var(--teal-deep)]">
           <BadgeCheck className="size-3.5" aria-hidden="true" />
           Verified

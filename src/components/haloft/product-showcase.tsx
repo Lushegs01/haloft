@@ -6,7 +6,7 @@ import {
   ShieldCheck,
   Sofa,
 } from "lucide-react";
-import { Elevation } from "./elevation";
+import { Facade } from "./facade";
 import { Reveal } from "./motion";
 
 const ANNOTATIONS = [
@@ -42,14 +42,14 @@ function PropertyPageMock() {
       {/* Gallery */}
       <div className="grid h-[190px] grid-cols-3 gap-1 sm:h-[260px]">
         <div className="relative col-span-2 bg-[var(--paper-warm)]">
-          <Elevation variant="court" />
+          <Facade variant="hostel" sizes="(max-width: 1024px) 62vw, 46vw" />
         </div>
         <div className="grid grid-rows-2 gap-1">
           <div className="relative bg-[var(--paper-warm)]">
-            <Elevation variant="terrace" />
+            <Facade variant="court" sizes="(max-width: 1024px) 31vw, 23vw" />
           </div>
           <div className="relative bg-[var(--paper-warm)]">
-            <Elevation variant="tower" />
+            <Facade variant="terrace" sizes="(max-width: 1024px) 31vw, 23vw" />
           </div>
         </div>
       </div>
