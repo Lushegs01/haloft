@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { HaloftLogoDark } from "@/components/ui/logo";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { AppToaster } from "@/components/ui/app-toaster";
 
 const navItems = [
@@ -107,6 +108,8 @@ export default async function AdminLayout({
               Sign Out
             </button>
           </form>
+
+          <PoweredBy className="px-3 pt-1 text-[10.5px] text-sidebar-foreground/45" />
         </div>
       </aside>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import { HaloftLogo } from "@/components/ui/logo";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { Facade } from "@/components/haloft/facade";
 import { AppToaster } from "@/components/ui/app-toaster";
 
@@ -62,9 +63,13 @@ export function AuthShell({
           </ul>
         </div>
 
-        <p className="relative text-[12px] text-white/40">
-          © {new Date().getFullYear()} Haloft. All rights reserved.
-        </p>
+        <div className="relative flex items-center gap-3 text-[12px]">
+          <p className="text-white/40">
+            © {new Date().getFullYear()} Haloft. All rights reserved.
+          </p>
+          <span aria-hidden="true" className="h-3 w-px bg-white/15" />
+          <PoweredBy className="text-white/60" />
+        </div>
       </aside>
 
       <main id="main" className="flex flex-1 items-center justify-center px-5 py-14 sm:px-8">

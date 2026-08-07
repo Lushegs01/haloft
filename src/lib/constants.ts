@@ -7,6 +7,19 @@ export const DEFAULT_CAMPUS_SLUG = "funaab";
 // human" affordance in the product.
 export const CONTACT_EMAIL = "support@haloft.homes";
 
+// The platform Haloft is built on, credited wherever the product signs its
+// own name: the site footer, the auth panel and the admin sidebar.
+export const PLATFORM_NAME = "CampOS";
+
+/**
+ * Where the platform credit points.
+ *
+ * Deliberately empty, on the same reasoning as SOCIAL_LINKS below: a credit
+ * that links nowhere is better than one that 404s. Set the real URL here and
+ * every "Powered by" on the site becomes a link — nothing else to change.
+ */
+export const PLATFORM_URL = "";
+
 /**
  * Social profiles rendered in the footer.
  *
