@@ -1,5 +1,6 @@
 "use client";
 
+import { tenancyTotal } from "@/lib/payments-logic";
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -461,9 +462,15 @@ export function PropertyDetailPage({
 
                       <div className="flex shrink-0 items-center justify-between gap-5 sm:justify-end">
                         <p className="text-[17px] font-semibold text-ink tabular">
-                          {formatNaira(Number(room.price_per_month ?? 0))}
+                          {formatNaira(
+                            tenancyTotal(
+                              room.annual_rent,
+                              room.agency_fee,
+                              room.caution_fee
+                            )
+                          )}
                           <span className="ml-1 text-[12px] font-normal text-muted-foreground">
-                            /mo
+                            /year
                           </span>
                         </p>
                         <Link
@@ -559,7 +566,7 @@ export function PropertyDetailPage({
                 <p className="mt-1.5 text-[30px] font-semibold tracking-[-0.032em] text-ink tabular">
                   {formatNaira(Number(property.min_price ?? 0))}
                   <span className="ml-1.5 text-[14px] font-normal text-muted-foreground">
-                    / month
+                    / year
                   </span>
                 </p>
 
@@ -620,7 +627,7 @@ export function PropertyDetailPage({
             <p className="text-[17px] font-semibold text-ink tabular">
               {formatNaira(Number(property.min_price ?? 0))}
               <span className="ml-1 text-[12px] font-normal text-muted-foreground">
-                /mo
+                /year
               </span>
             </p>
             <p className="text-[11.5px] text-muted-foreground">

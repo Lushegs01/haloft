@@ -13,8 +13,9 @@ const roomSchema = z.object({
   roomType: z.enum(["single", "double", "triple", "quad", "suite", "shared"]),
   floor: z.coerce.number().int().min(0).max(200).optional(),
   maxOccupancy: z.coerce.number().int().min(1).max(20),
-  pricePerMonth: z.coerce.number().min(0).max(100_000_000),
-  depositMonths: z.coerce.number().int().min(0).max(24),
+  annualRent: z.coerce.number().min(0).max(1_000_000_000),
+  agencyFee: z.coerce.number().min(0).max(1_000_000_000),
+  cautionFee: z.coerce.number().min(0).max(1_000_000_000),
   amenities: z.string().optional(),
 });
 
@@ -26,8 +27,9 @@ function parseRoom(formData: FormData) {
     roomType: formData.get("roomType"),
     floor: formData.get("floor") || undefined,
     maxOccupancy: formData.get("maxOccupancy"),
-    pricePerMonth: formData.get("pricePerMonth"),
-    depositMonths: formData.get("depositMonths"),
+    annualRent: formData.get("annualRent"),
+    agencyFee: formData.get("agencyFee") || 0,
+    cautionFee: formData.get("cautionFee") || 0,
     amenities: formData.get("amenities") || undefined,
   };
   return roomSchema.safeParse(raw);
@@ -57,8 +59,9 @@ export async function createRoom(formData: FormData) {
     room_type: d.roomType,
     floor: d.floor ?? null,
     max_occupancy: d.maxOccupancy,
-    price_per_month: d.pricePerMonth,
-    deposit_months: d.depositMonths,
+    annual_rent: d.annualRent,
+    agency_fee: d.agencyFee,
+    caution_fee: d.cautionFee,
     amenities: amenitiesArray(d.amenities),
     currency: "NGN",
     created_by: user.id,
@@ -94,8 +97,9 @@ export async function updateRoom(roomId: string, formData: FormData) {
       room_type: d.roomType,
       floor: d.floor ?? null,
       max_occupancy: d.maxOccupancy,
-      price_per_month: d.pricePerMonth,
-      deposit_months: d.depositMonths,
+      annual_rent: d.annualRent,
+      agency_fee: d.agencyFee,
+      caution_fee: d.cautionFee,
       amenities: amenitiesArray(d.amenities),
     })
     .eq("id", roomId);

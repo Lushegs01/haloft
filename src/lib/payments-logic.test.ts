@@ -4,6 +4,7 @@ import {
   chargeCoversBooking,
   isOverpayment,
   bookingReference,
+  tenancyTotal,
 } from "./payments-logic";
 
 describe("channelToMethod", () => {
@@ -59,5 +60,32 @@ describe("bookingReference", () => {
     const a = bookingReference("abcdef12-0000", 1);
     const b = bookingReference("abcdef12-0000", 2);
     expect(a).not.toBe(b);
+  });
+});
+
+describe("tenancyTotal", () => {
+  it("sums rent, agency and caution into the one charged figure", () => {
+    expect(tenancyTotal(1_200_000, 100_000, 50_000)).toBe(1_350_000);
+  });
+
+  it("treats missing fees as zero, so a rent-only room still prices", () => {
+    expect(tenancyTotal(900_000, null, undefined)).toBe(900_000);
+    expect(tenancyTotal(900_000, 0, 0)).toBe(900_000);
+  });
+
+  it("coerces the strings PostgREST returns for DECIMAL columns", () => {
+    // supabase-js hands back DECIMAL(12,2) as a string; a bare + would
+    // concatenate and quote a wildly wrong price.
+    expect(
+      tenancyTotal(
+        "1200000" as unknown as number,
+        "100000" as unknown as number,
+        "50000" as unknown as number
+      )
+    ).toBe(1_350_000);
+  });
+
+  it("is zero for a room with nothing set", () => {
+    expect(tenancyTotal(null, null, null)).toBe(0);
   });
 });

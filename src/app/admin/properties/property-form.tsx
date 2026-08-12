@@ -192,6 +192,30 @@ export function PropertyForm({ property, campuses, neighbourhoods, landlords }: 
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="lettingMode">Let as</Label>
+              <Select
+                name="lettingMode"
+                defaultValue={property?.letting_mode ?? "rooms"}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select letting mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rooms">
+                    Individual rooms — each student pays their own rent
+                  </SelectItem>
+                  <SelectItem value="whole">
+                    Whole apartment — one tenant takes the place
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[13px] text-muted-foreground">
+                A whole apartment needs exactly one unit under Rooms, priced
+                for the entire place.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
                 name="status"

@@ -1,3 +1,4 @@
+import { tenancyTotal } from "@/lib/payments-logic";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeSearchTerm } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -86,7 +87,7 @@ export default async function AdminRoomsPage({
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <p className="font-medium">₦{room.price_per_month?.toLocaleString()}</p>
+                        <p className="font-medium">₦{tenancyTotal(room.annual_rent, room.agency_fee, room.caution_fee).toLocaleString()}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Badge variant={room.is_available ? "default" : "secondary"}>

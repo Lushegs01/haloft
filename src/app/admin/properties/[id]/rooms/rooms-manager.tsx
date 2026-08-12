@@ -37,6 +37,7 @@ import {
   toggleRoomAvailability,
 } from "./actions";
 import type { Room } from "@/types/database";
+import { tenancyTotal } from "@/lib/payments-logic";
 
 const ROOM_TYPES = ["single", "double", "triple", "quad", "suite", "shared"] as const;
 
@@ -59,15 +60,29 @@ export function RoomsManager({
   const [editing, setEditing] = useState<Room | null>(null);
   const [saving, startSaving] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Rent, agency and caution are charged as one payment, so the form
+  // tracks them live and shows the single figure the student will see.
+  const [fees, setFees] = useState({ rent: 0, agency: 0, caution: 0 });
+  const totalPayable = tenancyTotal(fees.rent, fees.agency, fees.caution);
   const router = useRouter();
+
+  function feesOf(room: Room | null) {
+    return {
+      rent: Number(room?.annual_rent ?? 0),
+      agency: Number(room?.agency_fee ?? 0),
+      caution: Number(room?.caution_fee ?? 0),
+    };
+  }
 
   function openNew() {
     setEditing(null);
+    setFees({ rent: 0, agency: 0, caution: 0 });
     setDialogOpen(true);
   }
 
   function openEdit(room: Room) {
     setEditing(room);
+    setFees(feesOf(room));
     setDialogOpen(true);
   }
 
@@ -146,7 +161,7 @@ export function RoomsManager({
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Room</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price/mo</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Payable/yr</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -167,7 +182,7 @@ export function RoomsManager({
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right font-medium">
-                      ₦{room.price_per_month?.toLocaleString()}
+                      ₦{tenancyTotal(room.annual_rent, room.agency_fee, room.caution_fee).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
@@ -259,13 +274,37 @@ export function RoomsManager({
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="pricePerMonth">Price/month (₦)</Label>
-                <Input id="pricePerMonth" name="pricePerMonth" type="number" min={0} required defaultValue={editing?.price_per_month ?? ""} />
+                <Label htmlFor="annualRent">Annual rent (₦)</Label>
+                <Input id="annualRent" name="annualRent" type="number" min={0} required
+                  defaultValue={editing?.annual_rent ?? ""}
+                  onChange={(e) => setFees((f) => ({ ...f, rent: Number(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="depositMonths">Deposit (months)</Label>
-                <Input id="depositMonths" name="depositMonths" type="number" min={0} required defaultValue={editing?.deposit_months ?? 1} />
+                <Label htmlFor="agencyFee">Agency fee (₦)</Label>
+                <Input id="agencyFee" name="agencyFee" type="number" min={0}
+                  defaultValue={editing?.agency_fee ?? 0}
+                  onChange={(e) => setFees((f) => ({ ...f, agency: Number(e.target.value) || 0 }))} />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="cautionFee">Caution fee (₦)</Label>
+                <Input id="cautionFee" name="cautionFee" type="number" min={0}
+                  defaultValue={editing?.caution_fee ?? 0}
+                  onChange={(e) => setFees((f) => ({ ...f, caution: Number(e.target.value) || 0 }))} />
+              </div>
+            </div>
+
+            {/* The student pays all three at once, so show the figure they
+                will actually be charged rather than leaving it to be added up
+                in someone's head. */}
+            <p className="text-[13px] text-muted-foreground">
+              Student pays{" "}
+              <strong className="text-foreground">
+                ₦{totalPayable.toLocaleString()}
+              </strong>{" "}
+              once, covering a full year.
+            </p>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="floor">Floor</Label>
                 <Input id="floor" name="floor" type="number" min={0} defaultValue={editing?.floor ?? ""} placeholder="—" />

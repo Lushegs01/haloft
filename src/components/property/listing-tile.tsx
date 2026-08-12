@@ -79,7 +79,7 @@ export function ListingTile({
             <p className="shrink-0 text-[15px] font-semibold text-ink tabular">
               {formatNaira(Number(property.min_price ?? 0))}
               <span className="ml-1 text-[11.5px] font-normal text-muted-foreground">
-                /mo
+                /year
               </span>
             </p>
           </div>

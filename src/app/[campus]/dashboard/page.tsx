@@ -91,7 +91,7 @@ export default async function StudentDashboardPage({
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "*, rooms(name, price_per_month), properties(title, slug, campus_id), payments(id, status)"
+      "*, rooms(name, annual_rent), properties(title, slug, campus_id), payments(id, status)"
     )
     .eq("student_id", user.id)
     .is("deleted_at", null)

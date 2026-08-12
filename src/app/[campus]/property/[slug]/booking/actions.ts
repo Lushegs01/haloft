@@ -11,7 +11,6 @@ const bookingSchema = z.object({
   propertyId: z.string().uuid(),
   campusSlug: z.string(),
   checkInDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  checkOutDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   specialRequests: z.string().optional(),
 });
 
@@ -65,7 +64,6 @@ export async function createBooking(formData: FormData) {
     propertyId: formData.get("propertyId") as string,
     campusSlug: formData.get("campusSlug") as string,
     checkInDate: formData.get("checkInDate") as string,
-    checkOutDate: formData.get("checkOutDate") as string,
     specialRequests: formData.get("specialRequests") as string,
   };
 
@@ -74,21 +72,18 @@ export async function createBooking(formData: FormData) {
     return { error: "Invalid booking data. Please check your inputs." };
   }
 
-  const { roomId, propertyId, campusSlug, checkInDate, checkOutDate, specialRequests } =
+  const { roomId, propertyId, campusSlug, checkInDate, specialRequests } =
     parsed.data;
 
-  if (checkOutDate <= checkInDate) {
-    return { error: bookingErrorMessages.INVALID_DATES };
-  }
-
   // Availability check, pricing, booking insert, and room reservation happen
-  // atomically in the database under a row lock — see create_booking in
-  // db/migrations/002_booking_integrity.sql.
+  // atomically in the database under a row lock. The tenancy is a fixed
+  // year and the total is read from the room, so neither the term nor the
+  // amount can be set by the client — see create_booking in
+  // db/migrations/013_annual_pricing.sql.
   const { data: booking, error } = await supabase.rpc("create_booking", {
     p_room_id: roomId,
     p_property_id: propertyId,
     p_check_in_date: checkInDate,
-    p_check_out_date: checkOutDate,
     p_special_requests: specialRequests || null,
   });
 
