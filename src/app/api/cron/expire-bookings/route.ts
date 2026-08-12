@@ -16,9 +16,20 @@ import { drainNotifications } from "@/lib/notifications";
  * payment has settled, and is bounded per call. Running it twice in the
  * same minute is harmless.
  *
- * If pg_cron is enabled on the database, 015 already schedules this every
- * five minutes and this route is a belt-and-braces second trigger. If it
- * is not, this route is the mechanism — schedule it in vercel.json.
+ * ── Who actually runs this, and how often ──────────────────
+ *
+ * pg_cron is the PRIMARY scheduler: migration 015 registers the sweep to
+ * run every five minutes inside the database, which is the cadence a
+ * 30-minute reservation window needs. Supabase ships pg_cron — enable it
+ * under Database → Extensions and 015 does the rest.
+ *
+ * This route is the backstop for a database without pg_cron, and it is
+ * scheduled DAILY in vercel.json because Vercel's Hobby plan permits only
+ * daily crons. Daily is too coarse to be the primary mechanism for room
+ * release; on Pro, change the schedule to the same five minutes.
+ *
+ * Running both is harmless — the sweep is idempotent and takes rooms
+ * under the same lock ordering as create_booking.
  */
 
 export const dynamic = "force-dynamic";
@@ -46,11 +57,11 @@ export async function GET(request: Request) {
       rooms_freed: number;
     };
 
-    // Expiring a booking queues its notification. Drain here rather than
-    // waiting for the next mail tick — a student whose room was released
-    // should hear about it now, not in fifteen minutes.
-    const drained =
-      result.expired > 0 ? await drainNotifications(50, "cron:expire") : null;
+    // Always drain, not only when something expired. Expiring a booking
+    // queues its own notification, but this is also the one job that is
+    // guaranteed to be scheduled — so it doubles as the outbox sweep on a
+    // deployment where the mail cron cannot run more than once a day.
+    const drained = await drainNotifications(50, "cron:expire");
 
     if (result.expired > 0) {
       console.log(

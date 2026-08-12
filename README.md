@@ -153,9 +153,20 @@ tab took a bed off the market permanently.
 - a settled payment clears the clock entirely
 
 `expire_stale_bookings()` sweeps them, releases the rooms, and is safe to
-run every minute concurrently with itself. It is scheduled by pg_cron if
-that extension is available, and by `/api/cron/expire-bookings` (see
-`vercel.json`) if not. Running both is harmless.
+run every minute concurrently with itself.
+
+**pg_cron is the primary scheduler** — migration 015 registers the sweep
+to run every five minutes inside the database, which is the cadence a
+30-minute reservation window needs. Enable it under Supabase → Database →
+Extensions; 015 does the rest.
+
+`/api/cron/expire-bookings` is the backstop for a database without
+pg_cron. `vercel.json` schedules it **daily**, because Vercel's Hobby plan
+allows only daily crons — too coarse to be the primary mechanism for
+releasing rooms, which is why pg_cron carries it. On Pro, change both
+schedules to `*/5 * * * *` and `*/2 * * * *`. Running both is harmless:
+the sweep is idempotent. The same route also drains the notification
+outbox, so a deployment with one daily job still gets both swept.
 
 ### Verification is a state machine
 
