@@ -34,10 +34,27 @@ Required variables:
 
 ### Database Setup
 
-1. Run the migrations in `src/db/migrations/` in numeric order (001 through 008) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, 006 creates the photo storage bucket and admin booking functions, 007 adds payment integrity constraints, and 008 adds denormalized rating/price columns, a trigram search index, and audit logging (run it once; it backfills existing rows).
+1. Run the migrations in `src/db/migrations/` in numeric order (001 through 013) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, 006 creates the photo storage bucket and admin booking functions, 007 adds payment integrity constraints, 008 adds denormalized rating/price columns, a trigram search index, and audit logging, and 013 moves pricing to the annual model (run each once; they backfill existing rows).
 2. Seed data for FUNAAB is included in the migration.
 3. Enable email provider in Supabase Auth settings.
 4. (Optional) Configure Google OAuth provider.
+
+### Pricing model
+
+Haloft lets on the Nigerian annual model. A room carries three figures —
+`annual_rent`, `agency_fee` and `caution_fee` — and the student pays their sum
+once, up front, for a tenancy of exactly one year. There is no monthly rate and
+no instalment support.
+
+The student picks only a move-in date; `create_booking` derives the move-out
+date a year later, so neither the term nor the total can be moved by the
+client. `tenancyTotal()` in `src/lib/payments-logic.ts` is the one place the
+sum is computed — every screen that quotes a price goes through it, so a quote
+can never disagree with the Paystack charge.
+
+Properties declare a `letting_mode`: `rooms` (several students each rent a room
+and each pay their own year) or `whole` (one tenant takes the place, so the
+property carries a single bookable unit priced for the whole apartment).
 
 ### Payments (Paystack)
 

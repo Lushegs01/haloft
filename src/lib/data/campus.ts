@@ -262,7 +262,7 @@ export const getPropertyRooms = cache(async (propertyId: string) =>
         .eq("property_id", propertyId)
         .eq("is_available", true)
         .eq("status", "available")
-        .order("price_per_month", { ascending: true });
+        .order("annual_rent", { ascending: true });
 
       if (error || !data) return [];
       return data;

@@ -34,6 +34,24 @@ export function isOverpayment(
   return chargeAmountKobo > Math.round(Number(bookingTotalNaira) * 100);
 }
 
+/**
+ * What a student pays for a one-year tenancy: rent, agency fee and
+ * caution fee in a single transaction.
+ *
+ * This mirrors the total create_booking writes to bookings.total_amount
+ * (013_annual_pricing.sql), which is the figure Paystack actually
+ * charges. Every surface that quotes a price must go through here — a
+ * screen that adds the components up itself is a screen that can drift
+ * from the amount on the checkout page.
+ */
+export function tenancyTotal(
+  annualRent: number | null | undefined,
+  agencyFee: number | null | undefined,
+  cautionFee: number | null | undefined
+): number {
+  return Number(annualRent ?? 0) + Number(agencyFee ?? 0) + Number(cautionFee ?? 0);
+}
+
 /** Deterministic, collision-resistant Paystack reference for a booking. */
 export function bookingReference(bookingId: string, now = Date.now()): string {
   return `HLF-${bookingId.slice(0, 8)}-${now.toString(36)}`.toUpperCase();

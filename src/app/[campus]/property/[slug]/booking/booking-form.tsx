@@ -1,5 +1,6 @@
 "use client";
 
+import { tenancyTotal } from "@/lib/payments-logic";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -56,10 +57,21 @@ export function BookingForm({
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
-  const monthlyPrice = Number(room.price_per_month ?? 0);
-  const depositMonths = room.deposit_months ?? 1;
-  const deposit = monthlyPrice * depositMonths;
+  // A tenancy is one year, priced once. The move-out date is derived from
+  // the move-in date by the database, so it is shown here but never sent.
+  const annualRent = Number(room.annual_rent ?? 0);
+  const agencyFee = Number(room.agency_fee ?? 0);
+  const cautionFee = Number(room.caution_fee ?? 0);
+  const totalPayable = tenancyTotal(annualRent, agencyFee, cautionFee);
   const today = new Date().toISOString().split("T")[0];
+
+  const [checkIn, setCheckIn] = useState(today);
+  const moveOut = (() => {
+    const d = new Date(`${checkIn}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return null;
+    d.setFullYear(d.getFullYear() + 1);
+    return d;
+  })();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -157,21 +169,27 @@ export function BookingForm({
                   type="date"
                   required
                   min={today}
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
                   className={`${inputClass} mt-2`}
                 />
               </div>
               <div>
-                <label htmlFor="checkOutDate" className="text-[13px] font-medium text-ink">
-                  Move-out date
-                </label>
-                <input
-                  id="checkOutDate"
-                  name="checkOutDate"
-                  type="date"
-                  required
-                  min={today}
-                  className={`${inputClass} mt-2`}
-                />
+                <span className="text-[13px] font-medium text-ink">
+                  Tenancy ends
+                </span>
+                <p className="mt-2 flex h-13 items-center rounded-[10px] border border-[var(--line)] bg-[var(--paper-warm)] px-4 text-[14.5px] text-ink-soft">
+                  {moveOut
+                    ? moveOut.toLocaleDateString("en-NG", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </p>
+                <p className="mt-2 text-[12px] text-muted-foreground">
+                  Every tenancy runs for one year.
+                </p>
               </div>
             </div>
 
@@ -216,24 +234,33 @@ export function BookingForm({
 
             <dl className="mt-4 space-y-3 text-[13.5px]">
               <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">Rent per month</dt>
+                <dt className="text-muted-foreground">Rent (1 year)</dt>
                 <dd className="font-medium text-ink tabular">
-                  {formatNaira(monthlyPrice)}
+                  {formatNaira(annualRent)}
                 </dd>
               </div>
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">
-                  Deposit ({depositMonths}{" "}
-                  {depositMonths === 1 ? "month" : "months"})
-                </dt>
-                <dd className="font-medium text-ink tabular">
-                  {formatNaira(deposit)}
-                </dd>
-              </div>
+              {agencyFee > 0 && (
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">Agency fee</dt>
+                  <dd className="font-medium text-ink tabular">
+                    {formatNaira(agencyFee)}
+                  </dd>
+                </div>
+              )}
+              {cautionFee > 0 && (
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">
+                    Caution fee <span className="text-[12px]">(refundable)</span>
+                  </dt>
+                  <dd className="font-medium text-ink tabular">
+                    {formatNaira(cautionFee)}
+                  </dd>
+                </div>
+              )}
               <div className="flex items-baseline justify-between gap-4 border-t border-[var(--line)] pt-3">
-                <dt className="font-medium text-ink">Due at first payment</dt>
+                <dt className="font-medium text-ink">Total, paid once</dt>
                 <dd className="font-semibold text-ink tabular">
-                  {formatNaira(monthlyPrice + deposit)}
+                  {formatNaira(totalPayable)}
                 </dd>
               </div>
             </dl>
