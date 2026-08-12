@@ -37,4 +37,4 @@ jobs:
           # come from the hosting provider's environment at deploy time.
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
-          NEXT_PUBLIC_SITE_URL: https://www.haloft.homes
+          NEXT_PUBLIC_SITE_URL: https://haloft.homes

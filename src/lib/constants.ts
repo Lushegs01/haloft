@@ -18,7 +18,7 @@ export const CONTACT_EMAIL = "support@haloft.homes";
  * only covers local dev and CI.
  */
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://haloft.homes";
 
 // The platform Haloft is built on, credited wherever the product signs its
 // own name: the site footer, the auth panel and the admin sidebar.
