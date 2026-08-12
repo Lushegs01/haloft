@@ -41,7 +41,7 @@ The in-memory limiter resets per cold start and isn't shared across instances. T
 2. `npm i @upstash/ratelimit @upstash/redis`, then swap the store inside `src/lib/rate-limit.ts` (call sites don't change).
 
 ### Uptime monitoring
-Add `https://www.haloft.homes` to UptimeRobot (free) or Better Stack for downtime alerts.
+Add `https://haloft.homes` to UptimeRobot (free) or Better Stack for downtime alerts.
 
 ### Analytics / performance
 Enable **Vercel Analytics + Speed Insights** in the Vercel dashboard (two toggles) to see real Nigerian-user page-load numbers.
@@ -51,7 +51,7 @@ Enable **Vercel Analytics + Speed Insights** in the Vercel dashboard (two toggle
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
-| `NEXT_PUBLIC_SITE_URL` | canonical URL (`https://www.haloft.homes`) |
+| `NEXT_PUBLIC_SITE_URL` | canonical URL (`https://haloft.homes`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | server-only; payments + email lookups |
 | `PAYSTACK_SECRET_KEY` | payments |
 | `RESEND_API_KEY` / `EMAIL_FROM` | transactional email |

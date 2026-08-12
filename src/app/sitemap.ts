@@ -1,8 +1,8 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL as baseUrl } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://haloft.com";
   const supabase = await createClient();
 
   const { data: campuses } = await supabase

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SITE_URL } from "@/lib/constants";
 
 /**
  * Transactional email via Resend. Server-only.
@@ -15,7 +16,7 @@ function fromAddress() {
 }
 
 function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
+  return SITE_URL;
 }
 
 async function sendEmail(params: {
