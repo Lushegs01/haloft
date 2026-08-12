@@ -209,6 +209,13 @@ export type Database = {
           bank_account: string | null;
           bank_name: string | null;
           is_verified: boolean;
+          verification_state: "unverified" | "identity_verified" | "documents_verified" | "approved" | "suspended";
+          identity_verified_at: string | null;
+          documents_verified_at: string | null;
+          approved_at: string | null;
+          approved_by: string | null;
+          suspended_at: string | null;
+          suspension_reason: string | null;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -225,6 +232,13 @@ export type Database = {
           bank_account?: string | null;
           bank_name?: string | null;
           is_verified?: boolean;
+          verification_state?: "unverified" | "identity_verified" | "documents_verified" | "approved" | "suspended";
+          identity_verified_at?: string | null;
+          documents_verified_at?: string | null;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          suspended_at?: string | null;
+          suspension_reason?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -241,6 +255,13 @@ export type Database = {
           bank_account?: string | null;
           bank_name?: string | null;
           is_verified?: boolean;
+          verification_state?: "unverified" | "identity_verified" | "documents_verified" | "approved" | "suspended";
+          identity_verified_at?: string | null;
+          documents_verified_at?: string | null;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          suspended_at?: string | null;
+          suspension_reason?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -272,7 +293,15 @@ export type Database = {
           amenities: string[];
           rules: string[] | null;
           is_verified: boolean;
+          verification_state: "draft" | "submitted" | "under_review" | "verified" | "suspended" | "archived";
           verification_notes: string | null;
+          submitted_at: string | null;
+          review_started_at: string | null;
+          verified_at: string | null;
+          verified_by: string | null;
+          suspended_at: string | null;
+          suspension_reason: string | null;
+          commission_bps: number | null;
           featured_order: number | null;
           meta_title: string | null;
           meta_description: string | null;
@@ -305,7 +334,15 @@ export type Database = {
           amenities?: string[];
           rules?: string[] | null;
           is_verified?: boolean;
+          verification_state?: "draft" | "submitted" | "under_review" | "verified" | "suspended" | "archived";
           verification_notes?: string | null;
+          submitted_at?: string | null;
+          review_started_at?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          suspended_at?: string | null;
+          suspension_reason?: string | null;
+          commission_bps?: number | null;
           featured_order?: number | null;
           meta_title?: string | null;
           meta_description?: string | null;
@@ -338,7 +375,15 @@ export type Database = {
           amenities?: string[];
           rules?: string[] | null;
           is_verified?: boolean;
+          verification_state?: "draft" | "submitted" | "under_review" | "verified" | "suspended" | "archived";
           verification_notes?: string | null;
+          submitted_at?: string | null;
+          review_started_at?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          suspended_at?: string | null;
+          suspension_reason?: string | null;
+          commission_bps?: number | null;
           featured_order?: number | null;
           meta_title?: string | null;
           meta_description?: string | null;
@@ -658,6 +703,9 @@ export type Database = {
           currency: string;
           special_requests: string | null;
           admin_notes: string | null;
+          /** When the reservation window closes. NULL once paid. */
+          expires_at: string | null;
+          expired_at: string | null;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -678,6 +726,8 @@ export type Database = {
           currency?: string;
           special_requests?: string | null;
           admin_notes?: string | null;
+          expires_at?: string | null;
+          expired_at?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -698,6 +748,8 @@ export type Database = {
           currency?: string;
           special_requests?: string | null;
           admin_notes?: string | null;
+          expires_at?: string | null;
+          expired_at?: string | null;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -730,10 +782,22 @@ export type Database = {
         Row: {
           id: string;
           booking_id: string;
+          intent_id: string | null;
+          provider: string;
           amount: number;
+          expected_amount: number | null;
+          gateway_fee: number;
+          refunded_amount: number;
           currency: string;
           payment_method: "bank_transfer" | "card" | "cash" | "mobile_money";
-          status: "pending" | "success" | "failed" | "refunded";
+          status: "pending" | "success" | "overpaid" | "underpaid" | "failed" | "refunded" | "partially_refunded" | "duplicate";
+          anomaly: "overpayment" | "underpayment" | "duplicate_payment" | "currency_mismatch" | "amount_unverifiable" | null;
+          reconciliation_status: "not_required" | "pending_review" | "pending_refund" | "refund_issued" | "resolved" | "written_off";
+          reconciliation_notes: string | null;
+          reconciled_at: string | null;
+          reconciled_by: string | null;
+          /** Whether this payment is the one that paid for its booking. */
+          settles_booking: boolean;
           transaction_reference: string | null;
           paid_at: string | null;
           metadata: Json | null;
@@ -743,10 +807,21 @@ export type Database = {
         Insert: {
           id?: string;
           booking_id: string;
+          intent_id?: string | null;
+          provider?: string;
           amount: number;
+          expected_amount?: number | null;
+          gateway_fee?: number;
+          refunded_amount?: number;
           currency: string;
           payment_method: "bank_transfer" | "card" | "cash" | "mobile_money";
-          status?: "pending" | "success" | "failed" | "refunded";
+          status?: "pending" | "success" | "overpaid" | "underpaid" | "failed" | "refunded" | "partially_refunded" | "duplicate";
+          anomaly?: "overpayment" | "underpayment" | "duplicate_payment" | "currency_mismatch" | "amount_unverifiable" | null;
+          reconciliation_status?: "not_required" | "pending_review" | "pending_refund" | "refund_issued" | "resolved" | "written_off";
+          reconciliation_notes?: string | null;
+          reconciled_at?: string | null;
+          reconciled_by?: string | null;
+          settles_booking?: boolean;
           transaction_reference?: string | null;
           paid_at?: string | null;
           metadata?: Json | null;
@@ -756,10 +831,21 @@ export type Database = {
         Update: {
           id?: string;
           booking_id?: string;
+          intent_id?: string | null;
+          provider?: string;
           amount?: number;
+          expected_amount?: number | null;
+          gateway_fee?: number;
+          refunded_amount?: number;
           currency?: string;
           payment_method?: "bank_transfer" | "card" | "cash" | "mobile_money";
-          status?: "pending" | "success" | "failed" | "refunded";
+          status?: "pending" | "success" | "overpaid" | "underpaid" | "failed" | "refunded" | "partially_refunded" | "duplicate";
+          anomaly?: "overpayment" | "underpayment" | "duplicate_payment" | "currency_mismatch" | "amount_unverifiable" | null;
+          reconciliation_status?: "not_required" | "pending_review" | "pending_refund" | "refund_issued" | "resolved" | "written_off";
+          reconciliation_notes?: string | null;
+          reconciled_at?: string | null;
+          reconciled_by?: string | null;
+          settles_booking?: boolean;
           transaction_reference?: string | null;
           paid_at?: string | null;
           metadata?: Json | null;
@@ -1047,6 +1133,221 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_settings: {
+        Row: {
+          id: boolean;
+          platform_commission_bps: number;
+          booking_reservation_minutes: number;
+          payment_window_hours: number;
+          payment_intent_ttl_minutes: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: boolean;
+          platform_commission_bps?: number;
+          booking_reservation_minutes?: number;
+          payment_window_hours?: number;
+          payment_intent_ttl_minutes?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: boolean;
+          platform_commission_bps?: number;
+          booking_reservation_minutes?: number;
+          payment_window_hours?: number;
+          payment_intent_ttl_minutes?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      payment_intents: {
+        Row: {
+          id: string;
+          booking_id: string;
+          reference: string;
+          provider: string;
+          amount: number;
+          currency: string;
+          status: "active" | "consumed" | "expired" | "cancelled" | "superseded";
+          authorization_url: string | null;
+          attempt_count: number;
+          expires_at: string;
+          consumed_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          reference: string;
+          provider?: string;
+          amount: number;
+          currency?: string;
+          status?: "active" | "consumed" | "expired" | "cancelled" | "superseded";
+          authorization_url?: string | null;
+          attempt_count?: number;
+          expires_at: string;
+          consumed_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          reference?: string;
+          provider?: string;
+          amount?: number;
+          currency?: string;
+          status?: "active" | "consumed" | "expired" | "cancelled" | "superseded";
+          authorization_url?: string | null;
+          attempt_count?: number;
+          expires_at?: string;
+          consumed_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payment_exceptions: {
+        Row: {
+          id: string;
+          provider: string;
+          reference: string;
+          amount: number;
+          currency: string;
+          booking_id: string | null;
+          reason: "booking_not_found" | "booking_deleted" | "missing_metadata" | "invalid_amount";
+          raw: Json | null;
+          notes: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          provider?: string;
+          reference: string;
+          amount: number;
+          currency?: string;
+          booking_id?: string | null;
+          reason: "booking_not_found" | "booking_deleted" | "missing_metadata" | "invalid_amount";
+          raw?: Json | null;
+          notes?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          notes?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+        };
+        Relationships: [];
+      };
+      ledger_entries: {
+        Row: {
+          id: string;
+          booking_id: string | null;
+          payment_id: string | null;
+          property_id: string | null;
+          landlord_id: string | null;
+          entry_type:
+            | "gateway_charge"
+            | "gateway_fee"
+            | "platform_commission"
+            | "landlord_payable"
+            | "landlord_payout"
+            | "refund_due"
+            | "refund_paid"
+            | "adjustment";
+          direction: "credit" | "debit";
+          amount: number;
+          /** Generated: +amount for a credit, -amount for a debit. */
+          signed_amount: number;
+          currency: string;
+          reference: string | null;
+          notes: string | null;
+          metadata: Json | null;
+          occurred_at: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ledger_entries_payment_id_fkey";
+            columns: ["payment_id"];
+            isOneToOne: false;
+            referencedRelation: "payments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notification_outbox: {
+        Row: {
+          id: string;
+          topic: string;
+          event: string;
+          subject_type: string;
+          subject_id: string;
+          payload: Json;
+          status: "pending" | "processing" | "sent" | "failed" | "dead";
+          attempts: number;
+          max_attempts: number;
+          available_at: string;
+          locked_at: string | null;
+          locked_by: string | null;
+          last_error: string | null;
+          sent_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      security_events: {
+        Row: {
+          id: string;
+          occurred_at: string;
+          actor_id: string | null;
+          actor_role: string | null;
+          action: string;
+          resource_type: string | null;
+          resource_id: string | null;
+          result: "allowed" | "denied" | "error";
+          ip_address: string | null;
+          user_agent: string | null;
+          request_id: string | null;
+          detail: Json | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       property_listings: {
@@ -1120,6 +1421,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      booking_financials: {
+        Row: {
+          booking_id: string | null;
+          property_id: string | null;
+          student_id: string | null;
+          booking_status: string | null;
+          booking_total: number | null;
+          currency: string | null;
+          gross_received: number | null;
+          gateway_fees: number | null;
+          platform_commission: number | null;
+          landlord_outstanding: number | null;
+          landlord_paid_out: number | null;
+          refunds_outstanding: number | null;
+          refunds_paid: number | null;
+        };
+        Relationships: [];
+      };
+      payment_reconciliation_queue: {
+        Row: {
+          payment_id: string | null;
+          booking_id: string | null;
+          transaction_reference: string | null;
+          status: string | null;
+          anomaly: string | null;
+          reconciliation_status: string | null;
+          reconciliation_notes: string | null;
+          amount: number | null;
+          expected_amount: number | null;
+          variance: number | null;
+          refunded_amount: number | null;
+          currency: string | null;
+          paid_at: string | null;
+          created_at: string | null;
+          student_id: string | null;
+          property_id: string | null;
+          refund_outstanding: number | null;
+        };
+        Relationships: [];
+      };
+      ledger_imbalances: {
+        Row: {
+          payment_id: string | null;
+          imbalance: number | null;
+          entries: number | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       create_booking: {
@@ -1143,6 +1492,103 @@ export type Database = {
           p_action: string;
         };
         Returns: Database["public"]["Tables"]["bookings"]["Row"];
+      };
+      record_gateway_charge: {
+        Args: {
+          p_provider: string;
+          p_reference: string;
+          p_booking_id: string | null;
+          p_amount_minor: number;
+          p_currency: string;
+          p_channel: string;
+          p_paid_at?: string;
+          p_gateway_fee_minor?: number;
+          p_metadata?: Json;
+        };
+        Returns: Json;
+      };
+      create_payment_intent: {
+        Args: {
+          p_booking_id: string;
+          p_reference: string;
+          p_provider?: string;
+        };
+        Returns: Database["public"]["Tables"]["payment_intents"]["Row"];
+      };
+      attach_intent_authorization: {
+        Args: { p_intent_id: string; p_url: string };
+        Returns: undefined;
+      };
+      record_refund: {
+        Args: {
+          p_payment_id: string;
+          p_amount: number;
+          p_reference?: string;
+          p_notes?: string;
+        };
+        Returns: Json;
+      };
+      resolve_payment_reconciliation: {
+        Args: { p_payment_id: string; p_status: string; p_notes?: string };
+        Returns: Database["public"]["Tables"]["payments"]["Row"];
+      };
+      record_landlord_payout: {
+        Args: {
+          p_booking_id: string;
+          p_amount: number;
+          p_reference?: string;
+          p_notes?: string;
+        };
+        Returns: Json;
+      };
+      expire_stale_bookings: {
+        Args: { p_limit?: number };
+        Returns: Json;
+      };
+      set_property_verification_state: {
+        Args: { p_property_id: string; p_state: string; p_notes?: string };
+        Returns: Database["public"]["Tables"]["properties"]["Row"];
+      };
+      set_landlord_verification_state: {
+        Args: { p_landlord_id: string; p_state: string; p_notes?: string };
+        Returns: Database["public"]["Tables"]["landlords"]["Row"];
+      };
+      set_featured_media: {
+        Args: { p_media_id: string };
+        Returns: Database["public"]["Tables"]["media"]["Row"];
+      };
+      claim_notifications: {
+        Args: { p_limit?: number; p_worker?: string };
+        Returns: Database["public"]["Tables"]["notification_outbox"]["Row"][];
+      };
+      complete_notification: {
+        Args: { p_id: string; p_ok: boolean; p_error?: string | null };
+        Returns: undefined;
+      };
+      enqueue_notification: {
+        Args: {
+          p_topic: string;
+          p_event: string;
+          p_subject_type: string;
+          p_subject_id: string;
+          p_payload?: Json;
+        };
+        Returns: string | null;
+      };
+      log_security_event: {
+        Args: {
+          p_action: string;
+          p_result: string;
+          p_resource_type?: string | null;
+          p_resource_id?: string | null;
+          p_actor_id?: string | null;
+          p_actor_role?: string | null;
+          p_ip?: string | null;
+          p_user_agent?: string | null;
+          p_request_id?: string | null;
+          p_detail?: Json | null;
+        };
+        Returns: string;
       };
     };
     Enums: {
@@ -1181,3 +1627,40 @@ export type AuditLog = Tables<"audit_logs">;
 export type Landlord = Tables<"landlords">;
 export type PropertyListing = Views<"property_listings">;
 export type RoomListing = Views<"room_listings">;
+export type PaymentIntent = Tables<"payment_intents">;
+export type PaymentException = Tables<"payment_exceptions">;
+export type LedgerEntry = Tables<"ledger_entries">;
+export type PlatformSettings = Tables<"platform_settings">;
+export type SecurityEvent = Tables<"security_events">;
+export type OutboxRow = Tables<"notification_outbox">;
+export type BookingFinancials = Views<"booking_financials">;
+export type ReconciliationQueueRow = Views<"payment_reconciliation_queue">;
+
+/** The payment statuses that mean the booking has been paid for. */
+export const SETTLING_PAYMENT_STATUSES = [
+  "success",
+  "overpaid",
+  "partially_refunded",
+] as const;
+
+/**
+ * Whether a booking's payments include the one that paid for it.
+ *
+ * Screens used to ask `payments.some(p => p.status === "success")`, which
+ * quietly stopped being the whole answer once 'overpaid' existed — an
+ * overpaid booking IS paid. `settles_booking` is the column that means
+ * exactly this, and a partial unique index guarantees at most one row per
+ * booking carries it.
+ */
+export function isBookingPaid(
+  payments: Array<{ settles_booking?: boolean | null; status?: string | null }> | null | undefined
+): boolean {
+  return (payments ?? []).some(
+    (p) =>
+      p.settles_booking === true ||
+      // Rows read through a projection that did not select the column.
+      (p.settles_booking === undefined &&
+        (SETTLING_PAYMENT_STATUSES as readonly string[]).includes(p.status ?? ""))
+  );
+}
+

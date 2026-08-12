@@ -106,11 +106,9 @@ export function RoomsManager({
   function handleToggle(room: Room) {
     setBusyId(room.id);
     startSaving(async () => {
-      const result = await toggleRoomAvailability(
-        room.id,
-        propertyId,
-        !room.is_available
-      );
+      // Only the room id: the action derives the property from it rather
+      // than trusting a second identifier from the browser.
+      const result = await toggleRoomAvailability(room.id, !room.is_available);
       if (result.error) toast.error(result.error);
       else router.refresh();
       setBusyId(null);
@@ -121,7 +119,7 @@ export function RoomsManager({
     if (!window.confirm(`Delete "${room.name}"? This cannot be undone.`)) return;
     setBusyId(room.id);
     startSaving(async () => {
-      const result = await deleteRoom(room.id, propertyId);
+      const result = await deleteRoom(room.id);
       if (result.error) toast.error(result.error);
       else {
         toast.success("Room deleted.");

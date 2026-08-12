@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { FileText, Search } from "lucide-react";
+import { isBookingPaid } from "@/types/database";
 import { BookingActions } from "./booking-actions";
 
 export default async function AdminBookingsPage({
@@ -17,7 +18,7 @@ export default async function AdminBookingsPage({
 
   let query = supabase
     .from("bookings")
-    .select("*, rooms(name), properties(title, slug, campus_id), profiles(full_name), payments(id, status)")
+    .select("*, rooms(name), properties(title, slug, campus_id), profiles(full_name), payments(id, status, settles_booking)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
@@ -113,7 +114,7 @@ export default async function AdminBookingsPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <p className="font-medium">₦{booking.total_amount?.toLocaleString()}</p>
-                        {booking.payments?.some((p) => p.status === "success") ? (
+                        {isBookingPaid(booking.payments) ? (
                           <Badge variant="outline" className="mt-1 bg-success/10 text-success border-success/20">
                             Paid
                           </Badge>

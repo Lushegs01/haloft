@@ -15,6 +15,7 @@ import { DEFAULT_CAMPUS_SLUG } from "@/lib/constants";
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthShell, Field, authInputClass } from "@/components/layout/auth-shell";
+import { guardSignIn, guardMagicLink, recordAuthOutcome } from "../auth-actions";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -40,7 +41,18 @@ export default function SignInPage() {
 
     setLoading(true);
     try {
+      // Counted per address AND per email before the credential is tried,
+      // so a distributed attempt on one account trips the same limit a
+      // single host would. See src/app/auth/auth-actions.ts.
+      const gate = await guardSignIn(email);
+      if (!gate.ok) {
+        toast.error(gate.error ?? SERVICE_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({ email, password });
+      void recordAuthOutcome("auth.signin", email, !error);
+
       if (error) {
         toast.error(describeAuthError(error));
       } else {
@@ -65,10 +77,18 @@ export default function SignInPage() {
 
     setMagicLoading(true);
     try {
+      const gate = await guardMagicLink(email);
+      if (!gate.ok) {
+        toast.error(gate.error ?? SERVICE_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
+      void recordAuthOutcome("auth.magic_link", email, !error);
+
       if (error) {
         toast.error(describeAuthError(error));
       } else {

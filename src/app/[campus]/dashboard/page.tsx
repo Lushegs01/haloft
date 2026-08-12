@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatNaira } from "@/components/haloft/format";
 import { CancelBookingButton } from "./cancel-booking-button";
+import { isBookingPaid } from "@/types/database";
 import { PayNowButton } from "./pay-now-button";
 import { ReviewDialog } from "./review-dialog";
 import { AppToaster } from "@/components/ui/app-toaster";
@@ -91,7 +92,7 @@ export default async function StudentDashboardPage({
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "*, rooms(name, annual_rent), properties(title, slug, campus_id), payments(id, status)"
+      "*, rooms(name, annual_rent), properties(title, slug, campus_id), payments(id, status, settles_booking)"
     )
     .eq("student_id", user.id)
     .is("deleted_at", null)
@@ -172,9 +173,10 @@ export default async function StudentDashboardPage({
                 {bookings.map((booking) => {
                   const status = STATUS[booking.status] ?? STATUS.pending;
                   const StatusIcon = status.icon;
-                  const isPaid = booking.payments?.some(
-                    (p) => p.status === "success"
-                  );
+                  // `settles_booking`, not `status === "success"`: an
+                  // overpaid booking is a paid booking, and only one
+                  // payment row per booking can ever carry the flag.
+                  const isPaid = isBookingPaid(booking.payments);
                   const canReview =
                     booking.status === "completed" &&
                     !reviewedBookingIds.has(booking.id);
@@ -218,7 +220,6 @@ export default async function StudentDashboardPage({
                           {booking.status === "confirmed" && !isPaid && (
                             <PayNowButton
                               bookingId={booking.id}
-                              campusSlug={campus}
                               amount={Number(booking.total_amount)}
                             />
                           )}

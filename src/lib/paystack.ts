@@ -22,6 +22,13 @@ export interface PaystackChargeData {
   status: string;
   channel: string;
   paid_at: string | null;
+  /**
+   * Paystack's own cut, in kobo. Present on verify and on charge.success.
+   * The ledger needs it: without it every charge books as though the full
+   * amount were ours, and platform revenue is overstated by the gateway's
+   * share of every transaction.
+   */
+  fees?: number | null;
   gateway_response?: string;
   customer?: { email?: string };
   metadata?: { booking_id?: string; campus_slug?: string } | null;

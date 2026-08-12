@@ -11,6 +11,7 @@ import {
   Shield,
   BarChart3,
   Settings,
+  Wallet,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/admin/properties", icon: Home, label: "Properties" },
   { href: "/admin/rooms", icon: Building2, label: "Rooms" },
   { href: "/admin/bookings", icon: FileText, label: "Bookings" },
+  { href: "/admin/finance", icon: Wallet, label: "Finance" },
   { href: "/admin/inspections", icon: Shield, label: "Inspections" },
   { href: "/admin/reviews", icon: Users, label: "Reviews" },
   { href: "/admin/analytics", icon: BarChart3, label: "Analytics" },
