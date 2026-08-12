@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { limitBy, TOO_MANY_REQUESTS } from "@/lib/rate-limit";
+import { logSecurityEventAsync } from "@/lib/security-log";
+import { fail } from "@/lib/errors";
 import { z } from "zod";
 
 const rating = z.coerce.number().int().min(1).max(5);
@@ -33,6 +36,14 @@ export async function submitReview(formData: FormData) {
 
   if (!user) {
     return { error: "You must be signed in to leave a review." };
+  }
+
+  // Reviews are the product's trust signal, so the cost of writing one
+  // has to stay above zero — even though the integrity trigger (004)
+  // already requires a completed stay behind each.
+  const limit = await limitBy("review", { userId: user.id });
+  if (!limit.ok) {
+    return { error: TOO_MANY_REQUESTS };
   }
 
   const parsed = reviewSchema.safeParse({
@@ -83,10 +94,25 @@ export async function submitReview(formData: FormData) {
     if (error.code === "23505") {
       return { error: "You've already reviewed this booking." };
     }
-    return {
-      error: errorMessages[error.message] ?? "Could not submit your review. Please try again.",
-    };
+    const known = errorMessages[error.message];
+    if (known) return { error: known };
+
+    return fail({
+      message: "Could not submit your review. Please try again.",
+      cause: error,
+      context: "submitReview",
+      detail: { bookingId: d.bookingId },
+    });
   }
+
+  logSecurityEventAsync({
+    action: "review.submitted",
+    result: "allowed",
+    actorId: user.id,
+    resourceType: "review",
+    resourceId: d.bookingId,
+    detail: { property_id: booking.property_id, rating: d.overall },
+  });
 
   revalidatePath(`/${d.campusSlug}/dashboard`);
   return { success: true };

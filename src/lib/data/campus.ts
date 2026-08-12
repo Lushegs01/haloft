@@ -31,12 +31,59 @@ export const CACHE_TAGS = {
   campuses: "campuses",
 } as const;
 
+/**
+ * ── The caching tiers ───────────────────────────────────────
+ *
+ * Five of them, ordered by how much it costs to be wrong. Each TTL below
+ * is one of these, named, so that adding a new read means choosing a tier
+ * rather than inventing a number.
+ *
+ *   1  REFERENCE   30–60 min   campuses, universities, neighbourhoods.
+ *                              Change about once a term. Being an hour
+ *                              stale is invisible.
+ *
+ *   2  CATALOGUE   5–10 min    listing pages, property pages, reviews.
+ *                              A newly published property appearing a few
+ *                              minutes late is fine — and it does not,
+ *                              because publishing busts the tag.
+ *
+ *   3  DETAIL      1–5 min     a single listing. Same content, shorter
+ *                              window, because this is where a student
+ *                              reads the price before committing.
+ *
+ *   4  AVAILABILITY 30–120 s   which rooms are bookable. Moves with every
+ *                              booking. Short, because the cost of being
+ *                              stale is a student clicking a room that is
+ *                              gone — the booking itself still refuses,
+ *                              atomically, so this is a UX cost and not a
+ *                              correctness one.
+ *
+ *   5  NEVER       no cache    bookings, payments, the student dashboard,
+ *                              every admin screen. None of these go
+ *                              through this module at all: they use the
+ *                              cookie-bound server client, which is
+ *                              request-scoped by construction, and
+ *                              next.config.ts sends no-store on top.
+ *
+ * The tags are what make the TTLs generous rather than nervous: an admin
+ * write revalidates immediately, so the TTL is only the ceiling on how
+ * long a change made OUTSIDE the app can go unnoticed.
+ */
+export const CACHE_TTL = {
+  reference: 3600,
+  catalogue: 600,
+  detail: 300,
+  availability: 60,
+} as const;
+
 /** Campuses and neighbourhoods change on the order of once a term. */
-const SLOW_TTL = 3600;
+const SLOW_TTL = CACHE_TTL.reference;
 /** Listings change when the ops team publishes; the tag covers urgency. */
-const CATALOG_TTL = 600;
+const CATALOG_TTL = CACHE_TTL.catalogue;
+/** One listing: same data, shorter window — this is where price is read. */
+const DETAIL_TTL = CACHE_TTL.detail;
 /** Room availability moves with bookings, which also bust the tag. */
-const ROOMS_TTL = 120;
+const ROOMS_TTL = CACHE_TTL.availability;
 
 export const getCampusBySlug = cache(async (slug: string) =>
   unstable_cache(
@@ -227,7 +274,7 @@ export const getPropertyBySlug = cache(async (campusId: string, slug: string) =>
       return data;
     },
     ["property-by-slug", campusId, slug],
-    { tags: [CACHE_TAGS.properties], revalidate: CATALOG_TTL }
+    { tags: [CACHE_TAGS.properties], revalidate: DETAIL_TTL }
   )()
 );
 
@@ -248,7 +295,7 @@ export const getPropertyMeta = cache(async (campusId: string, slug: string) =>
       return data;
     },
     ["property-meta", campusId, slug],
-    { tags: [CACHE_TAGS.properties], revalidate: CATALOG_TTL }
+    { tags: [CACHE_TAGS.properties], revalidate: DETAIL_TTL }
   )()
 );
 
@@ -289,7 +336,7 @@ export const getPropertyMedia = cache(
         return data;
       },
       ["entity-media", entityType, entityId],
-      { tags: [CACHE_TAGS.properties], revalidate: CATALOG_TTL }
+      { tags: [CACHE_TAGS.properties], revalidate: DETAIL_TTL }
     )()
 );
 

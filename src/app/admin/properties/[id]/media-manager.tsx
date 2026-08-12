@@ -2,19 +2,28 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Media } from "@/types/database";
+import {
+  uploadPropertyMedia,
+  deletePropertyMedia,
+  setFeaturedMedia,
+  updateMediaAltText,
+} from "./media-actions";
 
-// Must match the property-media bucket limits in
-// db/migrations/006_media_storage_and_booking_admin.sql
+/**
+ * Client-side limits, kept only to fail fast and say why.
+ *
+ * They are NOT the check. The bytes go to the server, which reads their
+ * actual signature, rejects anything that is not really a JPEG/PNG/WebP
+ * whatever its Content-Type claims, and strips EXIF before storing —
+ * see src/lib/images.ts. What is here just saves a 5 MB round trip to
+ * learn something the picker already knew.
+ */
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
+const ACCEPTED = "image/jpeg,image/png,image/webp";
 
 export function MediaManager({
   propertyId,
@@ -27,69 +36,48 @@ export function MediaManager({
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  const router = useRouter();
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
 
-    const uploaded: Media[] = [];
+    const formData = new FormData();
+    let queued = 0;
+
     for (const file of Array.from(files)) {
-      const ext = ALLOWED_TYPES[file.type];
-      if (!ext) {
-        toast.error(`${file.name}: only JPEG, PNG, and WebP images are allowed.`);
-        continue;
-      }
       if (file.size > MAX_FILE_BYTES) {
         toast.error(`${file.name}: images must be 5 MB or smaller.`);
         continue;
       }
-
-      const path = `property/${propertyId}/${crypto.randomUUID()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("property-media")
-        .upload(path, file, { contentType: file.type });
-
-      if (uploadError) {
-        toast.error(`${file.name}: ${uploadError.message}`);
-        continue;
-      }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("property-media").getPublicUrl(path);
-
-      const { data: row, error: insertError } = await supabase
-        .from("media")
-        .insert({
-          entity_type: "property",
-          entity_id: propertyId,
-          url: publicUrl,
-          storage_path: path,
-          mime_type: file.type,
-          file_size: file.size,
-          display_order: media.length + uploaded.length,
-          is_featured: media.length + uploaded.length === 0,
-        })
-        .select()
-        .single();
-
-      if (insertError || !row) {
-        await supabase.storage.from("property-media").remove([path]);
-        toast.error(`${file.name}: ${insertError?.message ?? "could not save"}`);
-        continue;
-      }
-
-      uploaded.push(row);
+      formData.append("files", file);
+      queued += 1;
     }
 
-    if (uploaded.length > 0) {
-      setMedia((prev) => [...prev, ...uploaded]);
-      toast.success(
-        uploaded.length === 1 ? "Photo uploaded." : `${uploaded.length} photos uploaded.`
-      );
+    if (queued === 0) {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
     }
+
+    const result = await uploadPropertyMedia(propertyId, formData);
+
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      for (const failure of result.failed) {
+        toast.error(`${failure.name}: ${failure.reason}`);
+      }
+      if (result.uploaded > 0) {
+        toast.success(
+          result.uploaded === 1 ? "Photo uploaded." : `${result.uploaded} photos uploaded.`
+        );
+        // The server holds the truth about order and which photo became
+        // the cover, so re-read rather than guessing locally.
+        router.refresh();
+      }
+    }
+
     setUploading(false);
     if (inputRef.current) inputRef.current.value = "";
   }
@@ -98,39 +86,29 @@ export function MediaManager({
     if (!window.confirm("Delete this photo?")) return;
     setBusyId(item.id);
 
-    const { error } = await supabase.from("media").delete().eq("id", item.id);
-    if (error) {
-      toast.error(error.message);
-      setBusyId(null);
-      return;
+    const result = await deletePropertyMedia(item.id);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      setMedia((prev) => prev.filter((m) => m.id !== item.id));
+      toast.success("Photo deleted.");
+      router.refresh();
     }
-
-    await supabase.storage.from("property-media").remove([item.storage_path]);
-    setMedia((prev) => prev.filter((m) => m.id !== item.id));
     setBusyId(null);
-    toast.success("Photo deleted.");
   }
 
   async function handleSetFeatured(item: Media) {
     if (item.is_featured) return;
     setBusyId(item.id);
 
-    const { error: clearError } = await supabase
-      .from("media")
-      .update({ is_featured: false })
-      .eq("entity_type", "property")
-      .eq("entity_id", propertyId);
+    // One call, one transaction. The old two-update version left the
+    // property with no cover between the clear and the set.
+    const result = await setFeaturedMedia(item.id);
 
-    const { error } = clearError
-      ? { error: clearError }
-      : await supabase.from("media").update({ is_featured: true }).eq("id", item.id);
-
-    if (error) {
-      toast.error(error.message);
+    if (result.error) {
+      toast.error(result.error);
     } else {
-      setMedia((prev) =>
-        prev.map((m) => ({ ...m, is_featured: m.id === item.id }))
-      );
+      setMedia((prev) => prev.map((m) => ({ ...m, is_featured: m.id === item.id })));
       toast.success("Cover photo updated.");
     }
     setBusyId(null);
@@ -147,13 +125,10 @@ export function MediaManager({
       prev.map((m) => (m.id === item.id ? { ...m, alt_text: next || null } : m))
     );
 
-    const { error } = await supabase
-      .from("media")
-      .update({ alt_text: next || null })
-      .eq("id", item.id);
+    const result = await updateMediaAltText(item.id, next);
 
-    if (error) {
-      toast.error(`Description not saved: ${error.message}`);
+    if (result.error) {
+      toast.error(result.error);
       setMedia((prev) =>
         prev.map((m) => (m.id === item.id ? { ...m, alt_text: item.alt_text } : m))
       );
@@ -177,7 +152,7 @@ export function MediaManager({
           <input
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept={ACCEPTED}
             multiple
             className="hidden"
             onChange={(e) => handleFiles(e.target.files)}

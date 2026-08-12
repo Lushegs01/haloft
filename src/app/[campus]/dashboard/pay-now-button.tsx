@@ -8,18 +8,19 @@ import { initializePayment } from "./payment-actions";
 
 export function PayNowButton({
   bookingId,
-  campusSlug,
   amount,
 }: {
   bookingId: string;
-  campusSlug: string;
   amount: number;
 }) {
   const [pending, startTransition] = useTransition();
 
   function handlePay() {
     startTransition(async () => {
-      const result = await initializePayment(bookingId, campusSlug);
+      // No campus argument: the payment callback resolves the campus from
+      // the booking, so nothing about the destination rides along with
+      // the transaction.
+      const result = await initializePayment(bookingId);
       if (result.error) {
         toast.error(result.error);
       } else if (result.url) {

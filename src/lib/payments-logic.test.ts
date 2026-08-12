@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   channelToMethod,
-  chargeCoversBooking,
-  isOverpayment,
+  assessCharge,
+  toMinorUnits,
+  splitCharge,
   bookingReference,
   tenancyTotal,
 } from "./payments-logic";
@@ -23,31 +24,150 @@ describe("channelToMethod", () => {
   });
 });
 
-describe("chargeCoversBooking", () => {
-  it("accepts an exact NGN match (naira → kobo)", () => {
-    expect(chargeCoversBooking(150_000_00, "NGN", 150_000)).toBe(true);
+describe("toMinorUnits", () => {
+  it("converts naira to kobo", () => {
+    expect(toMinorUnits(150_000)).toBe(15_000_000);
   });
-  it("accepts overpayment", () => {
-    expect(chargeCoversBooking(160_000_00, "NGN", 150_000)).toBe(true);
+
+  it("survives the float drift that DECIMAL strings introduce", () => {
+    // Number("1250.55") * 100 is 125054.99999999999 before rounding, and
+    // a kobo of drift is a payment refused for arithmetic.
+    expect(toMinorUnits("1250.55")).toBe(125_055);
+    expect(toMinorUnits("0.07")).toBe(7);
+    expect(toMinorUnits("8.29")).toBe(829);
   });
-  it("rejects underpayment even by one kobo", () => {
-    expect(chargeCoversBooking(150_000_00 - 1, "NGN", 150_000)).toBe(false);
-  });
-  it("rejects non-NGN currency regardless of amount", () => {
-    expect(chargeCoversBooking(999_999_00, "USD", 150_000)).toBe(false);
-  });
-  it("handles fractional naira totals without float drift", () => {
-    // 1250.55 naira == 125055 kobo
-    expect(chargeCoversBooking(125_055, "NGN", 1250.55)).toBe(true);
-    expect(chargeCoversBooking(125_054, "NGN", 1250.55)).toBe(false);
+
+  it("treats a missing amount as zero rather than NaN", () => {
+    expect(toMinorUnits(null)).toBe(0);
+    expect(toMinorUnits(undefined)).toBe(0);
   });
 });
 
-describe("isOverpayment", () => {
-  it("is true only above the total", () => {
-    expect(isOverpayment(150_000_01, 150_000)).toBe(true);
-    expect(isOverpayment(150_000_00, 150_000)).toBe(false);
-    expect(isOverpayment(149_999_99, 150_000)).toBe(false);
+describe("assessCharge", () => {
+  const total = 500_000;
+  const exact = 50_000_000; // kobo
+
+  it("accepts an exact match, and only an exact match, as clean", () => {
+    const result = assessCharge(exact, "NGN", total);
+    expect(result.classification).toBe("exact");
+    expect(result.settles).toBe(true);
+    expect(result.needsReconciliation).toBe(false);
+    expect(result.surplusMinor).toBe(0);
+    expect(result.shortfallMinor).toBe(0);
+  });
+
+  it("does NOT call an overpayment a success", () => {
+    // The review's case: ₦550,000 against a ₦500,000 booking. The old
+    // `amount >= expected` rule recorded this as an ordinary success and
+    // the student's ₦50,000 went unmentioned.
+    const result = assessCharge(55_000_000, "NGN", total);
+    expect(result.classification).toBe("overpaid");
+    expect(result.surplusMinor).toBe(5_000_000);
+    expect(result.needsReconciliation).toBe(true);
+  });
+
+  it("still settles the booking on an overpayment", () => {
+    // Refusing would leave the student both charged and unhoused. The
+    // booking is covered; the surplus is a separate obligation.
+    expect(assessCharge(55_000_000, "NGN", total).settles).toBe(true);
+  });
+
+  it("flags one kobo over as an overpayment, not a rounding allowance", () => {
+    const result = assessCharge(exact + 1, "NGN", total);
+    expect(result.classification).toBe("overpaid");
+    expect(result.surplusMinor).toBe(1);
+  });
+
+  it("rejects underpayment and measures the shortfall", () => {
+    const result = assessCharge(40_000_000, "NGN", total);
+    expect(result.classification).toBe("underpaid");
+    expect(result.settles).toBe(false);
+    expect(result.shortfallMinor).toBe(10_000_000);
+    expect(result.needsReconciliation).toBe(true);
+  });
+
+  it("rejects underpayment by a single kobo", () => {
+    expect(assessCharge(exact - 1, "NGN", total).settles).toBe(false);
+  });
+
+  it("cannot settle a booking from another currency, however large", () => {
+    const result = assessCharge(99_999_999_99, "USD", total);
+    expect(result.classification).toBe("currency_mismatch");
+    expect(result.settles).toBe(false);
+    expect(result.needsReconciliation).toBe(true);
+  });
+
+  it("compares fractional totals without float drift", () => {
+    expect(assessCharge(125_055, "NGN", "1250.55").classification).toBe("exact");
+    expect(assessCharge(125_054, "NGN", "1250.55").classification).toBe("underpaid");
+    expect(assessCharge(125_056, "NGN", "1250.55").classification).toBe("overpaid");
+  });
+});
+
+describe("splitCharge", () => {
+  it("gives the landlord their quoted share of the booking", () => {
+    // 10% commission on a ₦500,000 booking, ₦7,500 to Paystack.
+    const split = splitCharge({
+      chargedAmount: 500_000,
+      bookingTotal: 500_000,
+      gatewayFee: 7_500,
+      commissionBps: 1000,
+    });
+    expect(split.landlord).toBe(450_000);
+    // The platform's 50,000 less the gateway's 7,500.
+    expect(split.commission).toBe(42_500);
+    expect(split.surplus).toBe(0);
+  });
+
+  it("keeps the surplus out of the landlord's accrual", () => {
+    const split = splitCharge({
+      chargedAmount: 550_000,
+      bookingTotal: 500_000,
+      gatewayFee: 7_500,
+      commissionBps: 1000,
+    });
+    expect(split.surplus).toBe(50_000);
+    // Unchanged: the landlord is owed for the booking, not for a mistake.
+    expect(split.landlord).toBe(450_000);
+    expect(split.commission).toBe(42_500);
+  });
+
+  it("always decomposes the charge exactly", () => {
+    const charged = 550_000;
+    const split = splitCharge({
+      chargedAmount: charged,
+      bookingTotal: 500_000,
+      gatewayFee: 7_500,
+      commissionBps: 1000,
+    });
+    // This identity is what makes the ledger balance; migration 014
+    // computes commission as the same residual.
+    expect(split.landlord + split.commission + split.gatewayFee + split.surplus).toBe(
+      charged
+    );
+  });
+
+  it("reports a negative commission when the fee exceeds the share", () => {
+    // A small booking with a flat-ish gateway fee: a real loss, and it
+    // must be visible rather than clamped to zero.
+    const split = splitCharge({
+      chargedAmount: 10_000,
+      bookingTotal: 10_000,
+      gatewayFee: 500,
+      commissionBps: 200, // 2% = 200, fee 500
+    });
+    expect(split.landlord).toBe(9_800);
+    expect(split.commission).toBe(-300);
+  });
+
+  it("accrues nothing to the landlord on a charge that does not settle", () => {
+    const split = splitCharge({
+      chargedAmount: 400_000,
+      bookingTotal: 500_000,
+      gatewayFee: 6_000,
+      commissionBps: 1000,
+    });
+    expect(split.landlord).toBe(0);
   });
 });
 

@@ -34,7 +34,23 @@ Required variables:
 
 ### Database Setup
 
-1. Run the migrations in `src/db/migrations/` in numeric order (001 through 013) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, 006 creates the photo storage bucket and admin booking functions, 007 adds payment integrity constraints, 008 adds denormalized rating/price columns, a trigram search index, and audit logging, and 013 moves pricing to the annual model (run each once; they backfill existing rows).
+1. Run the migrations in `src/db/migrations/` in numeric order (001 through 019) via the Supabase SQL Editor. All of them are required — 003 and 004 contain security-critical policies and triggers, 005 sets up automatic profile creation on signup, 006 creates the photo storage bucket and admin booking functions, 007 adds payment integrity constraints, 008 adds denormalized rating/price columns, a trigram search index, and audit logging, 013 moves pricing to the annual model, 014 adds the payment ledger and
+   reconciliation, 015 gives bookings a reservation clock, 016 turns
+   verification into a state machine, 017 fixes cover-photo atomicity and
+   scopes storage to the property, 018 adds the remaining indexes and the
+   security log, and 019 repairs the `property_listings` view (run each
+   once; they backfill existing rows).
+
+   To check a migration set before it touches a real project:
+
+   ```bash
+   bash scripts/verify-migrations.sh   # applies all of them, runs the flow tests
+   ```
+
+   It stands up the Supabase objects the migrations assume (`auth.uid()`,
+   `storage.objects`, the anon/authenticated roles) against a throwaway
+   Postgres, then exercises the money, booking and verification paths —
+   overpayment, duplicate payment, refunds, expiry, publish guards.
 2. Seed data for FUNAAB is included in the migration.
 3. Enable email provider in Supabase Auth settings.
 4. (Optional) Configure Google OAuth provider.
@@ -63,7 +79,144 @@ Students pay for **confirmed** bookings from their dashboard; the amount charged
 1. Create a [Paystack](https://paystack.com) account and grab your secret key (`sk_test_...` for testing).
 2. Set `PAYSTACK_SECRET_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (and in your hosting provider's environment for production).
 3. In the Paystack dashboard under **Settings → API Keys & Webhooks**, set the webhook URL to `https://<your-domain>/api/paystack/webhook`. The webhook is the source of truth; the browser callback (`/payment/callback`) is a verify-and-redirect fallback.
-4. Payment flow: booking request → admin confirms → student pays → webhook records the payment (idempotent, amount-validated). Paid bookings show a "Paid" badge in both dashboards, and students can no longer self-cancel them — refunds go through the team.
+4. Payment flow: booking request → admin confirms → student pays → webhook records the payment. Paid bookings show a "Paid" badge in both dashboards, and students can no longer self-cancel them — refunds go through the team.
+
+#### Every charge gets a row
+
+The recording path used to accept anything at or above the booking total
+and write it down as a success. Overpayment vanished, a duplicate charge
+was caught by a unique index and dropped, and an underpaid or
+wrong-currency charge was refused without a record — while the money sat
+at Paystack either way.
+
+`record_gateway_charge` (migration 014) now classifies every confirmed
+charge in ONE transaction and always writes it down:
+
+| What arrived | `payments.status` | Settles the booking? | Then what |
+| --- | --- | --- | --- |
+| Exact amount, NGN | `success` | yes | nothing to do |
+| More than the total | `overpaid` | yes | surplus booked as owed back, queued for refund |
+| Less than the total | `underpaid` | **no** | held, queued for review |
+| Booking already paid | `duplicate` | **no** | recorded in full, queued for refund |
+| Wrong currency | `failed` | **no** | queued for review |
+| No booking in the metadata | — | — | parked in `payment_exceptions` |
+
+`settles_booking` is the column that means "this is the payment that paid
+for the booking", and a partial unique index allows exactly one per
+booking. Ask that, not `status === 'success'` — an overpaid booking is a
+paid booking. `isBookingPaid()` in `src/types/database.ts` is the helper.
+
+Anything with an anomaly lands in **/admin/finance**, which is where a
+person refunds it, resolves it, or writes it off.
+
+#### The ledger
+
+`payments` is no longer the whole financial model. Every charge
+decomposes into `ledger_entries`:
+
+```
+gateway_charge   +A   money in
+gateway_fee      −F   Paystack's cut, taken from the platform share
+landlord_payable −L   accrued on the BOOKING, never on an overpayment
+refund_due       −S   the student's surplus, or a duplicate in full
+platform_commission −(A−F−L−S)   the residual
+                 ────
+                    0
+```
+
+The entries for a payment always sum to zero, because commission is
+computed as the residual. `ledger_imbalances` should therefore always be
+empty; a row in it means money was recorded and not accounted for, and it
+is the first thing /admin/finance shows. Commission going negative is not
+an error — it is a small booking whose gateway fee exceeded the platform's
+share, which is a real loss and should be visible as one.
+
+Commission is `platform_settings.platform_commission_bps` (default 5%),
+overridable per property with `properties.commission_bps`.
+
+#### Payment intents
+
+A student who opens the checkout, leaves, and comes back used to create a
+new Paystack reference every time — several abandoned transactions per
+booking, all needing reconciliation later. `create_payment_intent` holds
+at most one live intent per booking behind a partial unique index and
+reuses its authorization URL. This is also required rather than merely
+tidy: Paystack refuses to initialize a reference it has already seen.
+
+### Rooms come back
+
+A booking reserved its room and nothing ever released it, so an abandoned
+tab took a bed off the market permanently.
+
+- pending bookings hold a room for `booking_reservation_minutes` (30)
+- confirmed bookings hold it for `payment_window_hours` (48)
+- a settled payment clears the clock entirely
+
+`expire_stale_bookings()` sweeps them, releases the rooms, and is safe to
+run every minute concurrently with itself.
+
+**pg_cron is the primary scheduler** — migration 015 registers the sweep
+to run every five minutes inside the database, which is the cadence a
+30-minute reservation window needs. Enable it under Supabase → Database →
+Extensions; 015 does the rest.
+
+`/api/cron/expire-bookings` is the backstop for a database without
+pg_cron. `vercel.json` schedules it **daily**, because Vercel's Hobby plan
+allows only daily crons — too coarse to be the primary mechanism for
+releasing rooms, which is why pg_cron carries it. On Pro, change both
+schedules to `*/5 * * * *` and `*/2 * * * *`. Running both is harmless:
+the sweep is idempotent. The same route also drains the notification
+outbox, so a deployment with one daily job still gets both swept.
+
+### Verification is a state machine
+
+`is_verified` was a boolean anybody with admin rights could flip, with no
+record of who or on what evidence — for a product whose whole proposition
+is that someone visited the building.
+
+```
+property   draft → submitted → under_review → verified → suspended → archived
+landlord   unverified → identity_verified → documents_verified → approved
+```
+
+A trigger enforces the rule that matters: **`status = 'published'`
+requires the property verified AND its landlord approved.** Only a super
+admin may sign off either. `is_verified` is now derived from the state
+rather than set by hand, suspending a landlord unpublishes their
+listings, and every transition is audited with the actor who made it.
+
+### Email is off the critical path
+
+Booking creation and payment recording used to `await` an HTTPS call to
+Resend before returning, which put the mail provider's worst minute
+inside checkout — and meant a mail failure could make a recorded payment
+look like a failed one.
+
+Events are now enqueued in `notification_outbox` in the SAME transaction
+that records the money, and delivered afterwards: `after()` drains within
+a second of the response, and `/api/cron/notifications` sweeps whatever
+that misses. Claiming uses `FOR UPDATE SKIP LOCKED`, so the two never
+send twice. Failures back off; a row that exhausts its attempts is marked
+`dead` and stays visible.
+
+### Rate limiting
+
+The old limiter counted in a module-level `Map`. On a serverless platform
+that is per-instance state: three warm instances each granted the full
+allowance and a cold start reset the count, so "10 per minute" was not 10
+per minute.
+
+Counters now live in Upstash Redis over its REST API — no client library,
+nothing to keep warm. **Set `UPSTASH_REDIS_REST_URL` and
+`UPSTASH_REDIS_REST_TOKEN` in production**; without them it falls back to
+the in-memory counter and says so loudly in the log.
+
+Calls are limited on every dimension they have — user id, the thing being
+attacked (the email on a sign-in), and IP — and the strictest verdict
+wins. IP alone is not enough: a university NAT puts a whole campus behind
+one address, so the IP bucket is widened when a user id is also being
+counted. The limits are in one table at the bottom of
+`src/lib/rate-limit.ts`.
 
 ### Install & Run
 
@@ -202,6 +355,83 @@ Other decisions that hold the line:
   `property-media` bucket no longer lets anyone enumerate it. The bucket
   stays public: URLs still work for whoever holds one, they are just no
   longer discoverable.
+
+### Caching tiers
+
+Every cached read picks one of five tiers rather than inventing a TTL.
+They are named in `CACHE_TTL` at the top of `src/lib/data/campus.ts`.
+
+| Tier | TTL | What |
+| --- | --- | --- |
+| 1 Reference | 60 min | campuses, universities, neighbourhoods |
+| 2 Catalogue | 10 min | listing pages, search results, reviews |
+| 3 Detail | 5 min | one property — where the price is read |
+| 4 Availability | 60 s | which rooms are bookable |
+| 5 Never | — | bookings, payments, dashboards, all of `/admin` |
+
+Tier 5 is enforced twice: those routes use the cookie-bound server client
+(request-scoped by construction) and `next.config.ts` sends `no-store` on
+`/admin/*`, `/api/*`, `/payment/*`, `/auth/*`, the dashboard and booking.
+
+The tags are what let the TTLs be generous: an admin write calls
+`revalidateTag`, so a publish appears immediately and the TTL is only the
+ceiling on how long a change made outside the app can go unnoticed.
+
+## Measuring the database
+
+Indexes existing and indexes being *used* are different facts. The
+repository can build a catalogue large enough for the difference to show:
+
+```bash
+bash scripts/verify-migrations.sh                          # schema + flow tests
+psql -d haloft_test -f scripts/test-db/02_load_dataset.sql # 10k properties, 50k rooms…
+psql -d haloft_test -f scripts/test-db/03_explain_queries.sql
+```
+
+`02_load_dataset.sql` seeds with realistic skew — a few neighbourhoods
+hold most of the stock, prices cluster, 70% of properties are published —
+because uniform random data makes every index look good.
+`03_explain_queries.sql` runs `EXPLAIN (ANALYZE, BUFFERS)` over the
+seventeen query shapes the app actually issues, then prints index scan
+counts so an index nobody uses is visible as one. Plan *shape* transfers
+from a laptop; the milliseconds do not.
+
+## Security
+
+Every mutation follows the same order, and RLS is the backstop rather
+than the gate:
+
+```
+authenticate → authorize → validate → mutate
+```
+
+- **Errors do not leak the schema.** Server actions used to return
+  `error.message` straight from PostgREST, which hands a stranger your
+  constraint names. `src/lib/errors.ts` logs the real failure under a
+  correlation id and returns one sentence plus that id.
+- **Security events are queryable.** `audit_logs` says what changed;
+  `security_events` says who tried, from where, and whether they were
+  refused — including the refusals, which a diff-based audit table can
+  never capture. Writes go through the service role, so a compromised
+  admin session cannot edit its own trail.
+- **Uploads are checked as bytes, not as a Content-Type.** `file.type` is
+  a claim. `src/lib/images.ts` reads the actual signature, walks the
+  container to prove it parses, and strips EXIF/XMP/text chunks — a
+  listing photo published with the building's GPS coordinates on it is a
+  privacy problem nobody notices until it is one.
+- **Storage authorisation follows the property.** The `property-media`
+  policies asked only `is_admin()`, so any admin could write objects for
+  any campus. Objects live at `property/<property_id>/…` and the policies
+  now parse that path and ask `is_property_admin()`.
+- **Bulk actions are bounded** (100 ids), ids are validated as UUIDs
+  before they reach a query, and `duplicateProperty` neither copies a
+  deleted property nor carries its verification across.
+- **HTTP headers**: CSP, HSTS, COOP, CORP, `X-Permitted-Cross-Domain-Policies`,
+  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`. The
+  CSP keeps `'unsafe-inline'` for scripts, deliberately — Next inlines its
+  bootstrap, and the alternative is a per-request nonce that would make
+  the whole public catalogue dynamic. `next.config.ts` explains the trade
+  and what to change if that stops being true.
 
 ### Imagery
 

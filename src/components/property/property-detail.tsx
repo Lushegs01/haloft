@@ -1,9 +1,19 @@
-"use client";
-
+/**
+ * A listing page.
+ *
+ * This is a SERVER component. It was a 30 KB `"use client"` file, which
+ * meant every student who opened a listing downloaded and hydrated the
+ * amenity grid, the house rules, the room table, the reviews and the
+ * price panel — none of which does anything after paint — because the
+ * gallery, the share button and the description toggle needed state.
+ *
+ * Those three are now islands (`./photos`, `./share-button`,
+ * `./expandable-description`). Everything else renders to HTML on the
+ * server and ships no JavaScript at all, so the bundle a listing costs is
+ * the size of its interactions rather than the size of its markup.
+ */
 import { tenancyTotal } from "@/lib/payments-logic";
 import Link from "next/link";
-import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,21 +21,16 @@ import {
   Bath,
   Car,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Dumbbell,
   Fan,
   Flag,
   Flame,
   Footprints,
-  Grid2x2,
-  Share2,
   Shield,
   Sofa,
   Star,
   WashingMachine,
   Wifi,
-  X,
   Zap,
 } from "lucide-react";
 import { Facade } from "@/components/haloft/facade";
@@ -33,6 +38,9 @@ import { formatNaira, propertyTypeLabel } from "@/components/haloft/format";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { walkMinutes } from "@/lib/utils";
 import type { PropertyListing, RoomListing } from "@/types/database";
+import { PropertyPhotos } from "./photos";
+import { ShareButton } from "./share-button";
+import { ExpandableDescription } from "./expandable-description";
 
 const AMENITY_ICONS: Record<string, typeof Wifi> = {
   wifi: Wifi,
@@ -108,19 +116,12 @@ export function PropertyDetailPage({
   campusLat,
   campusLng,
 }: PropertyDetailPageProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [descriptionOpen, setDescriptionOpen] = useState(false);
-  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-
   const avgRating = property.avg_rating ?? 0;
   const reviewCount = property.review_count ?? 0;
   const title = property.title ?? "Student home";
   const amenities = property.amenities ?? [];
   const rules = property.rules ?? [];
   const description = property.description ?? "";
-  const descriptionIsLong = description.length > 420;
 
   const minutes =
     campusLat != null &&
@@ -134,58 +135,6 @@ export function PropertyDetailPage({
           Number(campusLng)
         )
       : null;
-
-  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
-  const prevImage = useCallback(
-    () => setLightboxIndex((i) => (i - 1 + media.length) % media.length),
-    [media.length]
-  );
-  const nextImage = useCallback(
-    () => setLightboxIndex((i) => (i + 1) % media.length),
-    [media.length]
-  );
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") prevImage();
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "Escape") closeLightbox();
-    };
-    window.addEventListener("keydown", handler);
-    return () => {
-      document.body.style.overflow = previous;
-      window.removeEventListener("keydown", handler);
-    };
-  }, [lightboxOpen, prevImage, nextImage, closeLightbox]);
-
-  async function share() {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-        return;
-      } catch {
-        /* the user dismissed the sheet — fall through to copying */
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareState("copied");
-      setTimeout(() => setShareState("idle"), 2200);
-    } catch {
-      /* clipboard unavailable — nothing sensible left to do */
-    }
-  }
-
-  const openLightbox = (index: number) => {
-    setLightboxIndex(index);
-    setLightboxOpen(true);
-  };
 
   return (
     <div className="pb-28 md:pb-0">
@@ -203,84 +152,14 @@ export function PropertyDetailPage({
             <span className="sm:hidden">Back</span>
           </Link>
 
-          <button
-            type="button"
-            onClick={share}
-            className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-[var(--line-strong)] px-3 text-[13px] font-medium text-ink transition-colors hover:border-[var(--ink-soft)]"
-          >
-            <Share2 className="size-3.5" aria-hidden="true" />
-            {shareState === "copied" ? "Link copied" : "Share"}
-          </button>
+          <ShareButton title={title} />
         </div>
       </div>
 
       <div className="shell pt-6 lg:pt-8">
         {/* ── Gallery ──────────────────────────────────────── */}
         {media.length > 0 ? (
-          <>
-            <div className="hidden grid-cols-4 grid-rows-2 gap-1.5 overflow-hidden rounded-[18px] lg:grid lg:h-[clamp(340px,38vw,460px)]">
-              <button
-                type="button"
-                onClick={() => openLightbox(0)}
-                className="relative col-span-2 row-span-2 cursor-zoom-in bg-[var(--paper-warm)]"
-              >
-                <Image
-                  src={media[0].url}
-                  alt={media[0].alt_text ?? title}
-                  fill
-                  priority
-                  className="object-cover transition-opacity hover:opacity-95"
-                  sizes="50vw"
-                />
-              </button>
-              {media.slice(1, 5).map((m, i) => (
-                <button
-                  key={m.url}
-                  type="button"
-                  onClick={() => openLightbox(i + 1)}
-                  className="relative cursor-zoom-in bg-[var(--paper-warm)]"
-                >
-                  <Image
-                    src={m.url}
-                    alt={m.alt_text ?? `${title} — photo ${i + 2}`}
-                    fill
-                    className="object-cover transition-opacity hover:opacity-95"
-                    sizes="25vw"
-                  />
-                </button>
-              ))}
-              {media.length > 5 && (
-                <button
-                  type="button"
-                  onClick={() => openLightbox(0)}
-                  className="absolute bottom-4 right-4 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[rgba(255,255,255,0.95)] px-4 text-[13px] font-medium text-ink shadow-ambient transition-colors hover:bg-white"
-                >
-                  <Grid2x2 className="size-4" aria-hidden="true" />
-                  All {media.length} photos
-                </button>
-              )}
-            </div>
-
-            <div className="rail scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5 sm:-mx-8 sm:px-8 lg:hidden">
-              {media.map((m, i) => (
-                <button
-                  key={m.url}
-                  type="button"
-                  onClick={() => openLightbox(i)}
-                  className="relative aspect-[4/3] w-[82vw] max-w-[26rem] shrink-0 overflow-hidden rounded-[14px] bg-[var(--paper-warm)]"
-                >
-                  <Image
-                    src={m.url}
-                    alt={m.alt_text ?? `${title} — photo ${i + 1}`}
-                    fill
-                    priority={i === 0}
-                    className="object-cover"
-                    sizes="82vw"
-                  />
-                </button>
-              ))}
-            </div>
-          </>
+          <PropertyPhotos media={media} title={title} />
         ) : (
           <div className="relative aspect-[16/9] overflow-hidden rounded-[18px] bg-[var(--paper-warm)] lg:aspect-[21/9]">
             <Facade variant="estate" priority sizes="(max-width: 1024px) 100vw, 82vw" />
@@ -350,22 +229,7 @@ export function PropertyDetailPage({
                 <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   About this home
                 </h2>
-                <p
-                  className={`mt-4 max-w-[62ch] text-[15px] leading-[1.7] text-ink-soft ${
-                    descriptionOpen || !descriptionIsLong ? "" : "line-clamp-4"
-                  }`}
-                >
-                  {description}
-                </p>
-                {descriptionIsLong && (
-                  <button
-                    type="button"
-                    onClick={() => setDescriptionOpen((v) => !v)}
-                    className="mt-3 border-b border-[var(--line-strong)] pb-0.5 text-[13.5px] font-medium text-ink transition-colors hover:border-[var(--teal-deep)]"
-                  >
-                    {descriptionOpen ? "Show less" : "Read the full description"}
-                  </button>
-                )}
+                <ExpandableDescription text={description} />
               </section>
             )}
 
@@ -643,84 +507,6 @@ export function PropertyDetailPage({
         </div>
       </div>
 
-      {/* ── Lightbox ─────────────────────────────────────── */}
-      {lightboxOpen && media.length > 0 && (
-          <div
-            className="fade-in fixed inset-0 z-[100] flex flex-col bg-[rgba(10,15,20,0.97)]"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`${title} photos`}
-          >
-            <div className="flex items-center justify-between px-5 py-4">
-              <p className="text-[13px] text-white/60 tabular">
-                {lightboxIndex + 1} / {media.length}
-              </p>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={closeLightbox}
-                className="inline-flex size-11 items-center justify-center rounded-[10px] text-white transition-colors hover:bg-white/10"
-                aria-label="Close photos"
-              >
-                <X className="size-5" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="relative flex flex-1 items-center justify-center px-4">
-              {media.length > 1 && (
-                <button
-                  type="button"
-                  onClick={prevImage}
-                  className="absolute left-3 z-10 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-                  aria-label="Previous photo"
-                >
-                  <ChevronLeft className="size-5" aria-hidden="true" />
-                </button>
-              )}
-
-              <div className="relative aspect-[4/3] w-full max-w-4xl">
-                <Image
-                  src={media[lightboxIndex]?.url ?? ""}
-                  alt={media[lightboxIndex]?.alt_text ?? `${title} photo`}
-                  fill
-                  className="object-contain"
-                  sizes="90vw"
-                />
-              </div>
-
-              {media.length > 1 && (
-                <button
-                  type="button"
-                  onClick={nextImage}
-                  className="absolute right-3 z-10 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-                  aria-label="Next photo"
-                >
-                  <ChevronRight className="size-5" aria-hidden="true" />
-                </button>
-              )}
-            </div>
-
-            {media.length > 1 && (
-              <div className="scrollbar-hide flex gap-2 overflow-x-auto px-5 py-4">
-                {media.map((m, i) => (
-                  <button
-                    key={m.url}
-                    type="button"
-                    onClick={() => setLightboxIndex(i)}
-                    className={`relative size-16 shrink-0 overflow-hidden rounded-[8px] transition-opacity ${
-                      i === lightboxIndex
-                        ? "ring-2 ring-white"
-                        : "opacity-55 hover:opacity-100"
-                    }`}
-                    aria-label={`Photo ${i + 1}`}
-                  >
-                    <Image src={m.url} alt="" fill className="object-cover" sizes="64px" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthShell, Field, authInputClass } from "@/components/layout/auth-shell";
+import { guardSignUp, recordAuthOutcome } from "../auth-actions";
 
 const STRENGTH = [
   { key: "weak", label: "Weak", color: "bg-[var(--destructive)]" },
@@ -45,6 +46,15 @@ export default function SignUpPage() {
 
     setLoading(true);
     try {
+      // Signup is the cheapest thing to automate against a marketplace —
+      // it creates rows, sends mail on our domain's reputation, and needs
+      // no credential to attempt. Limited per address and per email.
+      const gate = await guardSignUp(email);
+      if (!gate.ok) {
+        toast.error(gate.error ?? SERVICE_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -53,6 +63,7 @@ export default function SignUpPage() {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+      void recordAuthOutcome("auth.signup", email, !error);
 
       if (error) {
         toast.error(describeAuthError(error));
