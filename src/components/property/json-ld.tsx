@@ -1,6 +1,5 @@
 import type { PropertyListing } from "@/types/database";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
+import { SITE_URL } from "@/lib/constants";
 
 interface JsonLdProps {
   property: PropertyListing;

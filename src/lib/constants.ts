@@ -7,6 +7,19 @@ export const DEFAULT_CAMPUS_SLUG = "funaab";
 // human" affordance in the product.
 export const CONTACT_EMAIL = "support@haloft.homes";
 
+/**
+ * Canonical origin, no trailing slash. Everything that has to name the
+ * site absolutely — metadataBase, the sitemap, robots, JSON-LD, email
+ * links — reads this rather than its own literal. Five call sites used
+ * to inline their own fallback and two of them had drifted to a domain
+ * we do not own, which is exactly the failure this prevents.
+ *
+ * NEXT_PUBLIC_SITE_URL wins in every deployed environment; the fallback
+ * only covers local dev and CI.
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
+
 // The platform Haloft is built on, credited wherever the product signs its
 // own name: the site footer, the auth panel and the admin sidebar.
 export const PLATFORM_NAME = "CampOS";

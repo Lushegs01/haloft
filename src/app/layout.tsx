@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { SITE_URL } from "@/lib/constants";
 
 /* Primary voice — a precise, contemporary grotesque. Everything in the
    product is set in this face; hierarchy comes from size, weight and
@@ -21,7 +22,6 @@ const editorial = Instrument_Serif({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.haloft.homes";
 const TITLE = "Haloft — Student housing near your university, without the chaos";
 const DESCRIPTION =
   "Haloft helps Nigerian university students find rooms, self-contained apartments and hostels around campus — with clearer information, walk-times you can check, transparent pricing and fewer middlemen.";
