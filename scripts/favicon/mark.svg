@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none">
+  <!--
+    The Haloft mark, for the favicon.
+
+    Geometry is copied verbatim from HaloftMark in src/components/ui/logo.tsx
+    so the tab icon and the header logo can never drift apart. If the mark
+    changes there, change it here and re-run scripts/build-favicon.mjs.
+
+    The transform exists because the component's 100x100 box carries
+    padding a favicon does not want: the drawn ink actually spans
+    x 10.2→89.8 and y 0.22→83.1, so it sits high and small in the box.
+    This recentres that ink and scales it to fill 92 of the 100 units —
+    at 16px, every unit of empty margin is a pixel the arch does not get.
+  -->
+  <defs>
+    <linearGradient id="arch" x1="6" y1="88" x2="94" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#182f4d"/>
+      <stop offset="48%" stop-color="#1f5a6b"/>
+      <stop offset="100%" stop-color="#2fa694"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(50 50) scale(1.11) translate(-50 -41.66)">
+    <path d="M15 78.3A45 45 0 1 1 85 78.3" stroke="url(#arch)" stroke-width="9.6" stroke-linecap="round"/>
+    <path d="M15 78.3 50 43.6 85 78.3" stroke="url(#arch)" stroke-width="9.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="50" cy="43.6" r="6.4" fill="#e86530"/>
+  </g>
+</svg>
