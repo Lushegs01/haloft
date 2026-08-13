@@ -43,7 +43,7 @@ export function Hero({
                   <>
                     next{" "}
                     <span className="editorial font-normal text-[var(--teal-deep)]">
-                      place
+                      space
                     </span>
                     .
                   </>,
